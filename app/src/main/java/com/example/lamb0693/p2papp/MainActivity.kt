@@ -24,13 +24,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
         super.onCreate(savedInstanceState)
 
         bindMain = ActivityMainBinding.inflate(layoutInflater)
-
         setContentView(bindMain.root)
 
-        val fragmentTransaction: FragmentTransaction = fragmentManager.beginTransaction()
-        fragmentTransaction.add(R.id.frameLayoutContainer, homeFragment)
-        fragmentTransaction.commit();
-
+        initializeMainWithHomeFragment()
         initializeButton()
     }
 
@@ -43,6 +39,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
                 onChangeFragment(it)
             }
         }
+    }
+
+    private fun initializeMainWithHomeFragment(){
+        val fragmentTransaction: FragmentTransaction = fragmentManager.beginTransaction()
+        fragmentTransaction.add(R.id.frameLayoutContainer, homeFragment)
+        fragmentTransaction.commit();
     }
 
     override fun onChangeFragment(newFragment: Fragment) {

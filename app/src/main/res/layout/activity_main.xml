@@ -15,16 +15,30 @@
 
         <ImageView
             android:id="@+id/imageConnectStatus"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1" />
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:adjustViewBounds="true"
+            android:paddingHorizontal="10dp"
+            android:src="@android:drawable/button_onoff_indicator_off"
+            tools:ignore="ContentDescription" />
+
+        <TextView
+            android:id="@+id/tvConnectedDevice"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="TextView"
+            android:textColor="#000000"
+            tools:ignore="HardcodedText" />
 
         <ImageButton
             android:id="@+id/imageButtonSetting"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            app:srcCompat="@android:drawable/ic_menu_manage" />
+            android:layout_width="60dp"
+            android:adjustViewBounds="true"
+            android:layout_height="match_parent"
+            app:srcCompat="@android:drawable/ic_menu_manage"
+            android:contentDescription="setting"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 
     <FrameLayout
@@ -37,24 +51,28 @@
     </FrameLayout>
 
     <LinearLayout
+        android:padding="5dp"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="60dp"
         android:orientation="horizontal">
 
         <EditText
             android:id="@+id/editMessage"
-            android:layout_width="wrap_content"
+            android:textSize="20sp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:ems="10"
             android:inputType="text"
-            android:text="Name" />
+            android:text="Name"
+            tools:ignore="HardcodedText,LabelFor,VisualLintTextFieldSize"
+            android:autofillHints="message" />
 
         <Button
             android:id="@+id/buttonSendMessage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Button" />
+            android:layout_width="100dp"
+            android:layout_height="match_parent"
+            android:text="Button"
+            tools:ignore="HardcodedText" />
     </LinearLayout>
 </LinearLayout>
