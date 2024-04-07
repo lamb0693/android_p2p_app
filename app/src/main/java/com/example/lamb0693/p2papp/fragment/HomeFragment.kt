@@ -7,7 +7,6 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import com.example.lamb0693.p2papp.R
 import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
 import java.lang.Exception
@@ -43,8 +42,6 @@ class HomeFragment : Fragment() {
     ): View? {
         // Inflate the layout for this fragment
         val view = inflater.inflate(R.layout.fragment_home, container, false)
-
-
 
         return view
     }

@@ -2,4 +2,10 @@
     <string name="app_name">p2papp</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="server">Server</string>
+    <string name="client">Client</string>
+    <string name="connect">Connect</string>
+    <string name="home_screen">Home Screen</string>
+    <string name="room_name">Room Name</string>
+    <string name="disconnect">Disconnect</string>
 </resources>

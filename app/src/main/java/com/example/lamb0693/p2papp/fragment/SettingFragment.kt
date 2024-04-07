@@ -8,6 +8,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.RadioButton
+import com.example.lamb0693.p2papp.MainActivity
 import com.example.lamb0693.p2papp.R
 import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
 import java.lang.Exception
@@ -26,9 +29,8 @@ class SettingFragment : Fragment() {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
-
+    private var thisView : View? = null
     private var homeFragment: HomeFragment? = null
-
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,21 +46,60 @@ class SettingFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        val view =  inflater.inflate(R.layout.fragment_setting, container, false)
+        thisView =  inflater.inflate(R.layout.fragment_setting, container, false)
+        Log.e(">>>>", "fail to create View in onCreateView")
 
-        val buttonSettingCompleted = view?.findViewById<Button>(R.id.buttonSettingCompleted)
+        initializeButton()
+
+        return thisView
+    }
+
+    fun setHomeFragment(fragment: HomeFragment?) {
+        if(fragment == null) {
+            Log.e(">>>>", "homeFragment is null  in setHomeFragment()")
+        }
+        homeFragment = fragment
+    }
+
+    private fun initializeButton(){
+        val buttonSettingCompleted = thisView?.findViewById<Button>(R.id.buttonSettingCompleted)
+        if(buttonSettingCompleted == null) Log.e(">>>>", "buttonSettingCompleted null")
         buttonSettingCompleted?.setOnClickListener{
             homeFragment?.let { fragment ->
-                fragmentTransactionHandler?.onChangeFragment(fragment)
+                fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
             }
         }
 
-        return view
-    }
+        val buttonConnectSession = thisView?.findViewById<Button>(R.id.buttonConnectSession)
+        if(buttonConnectSession == null) Log.e(">>>>", "buttonConnectSession null")
+        buttonConnectSession?.isEnabled = ( param1!!.contains("false") )
+        buttonConnectSession?.setOnClickListener{
+            val roomName : String
+            thisView?.findViewById<EditText>(R.id.editRoomName).also{editText->
+                roomName = editText?.text.toString()
+            }
+            fragmentTransactionHandler?.onConnectSessionButtonClicked(roomName)
+        }
 
-    fun setHomeFragment(fragment: HomeFragment) {
-        homeFragment = fragment
-        if(homeFragment == null) Log.e(">>>>", "homeFragment null in setHomeFragement")
+        val buttonDisconnectSession = thisView?.findViewById<Button>(R.id.buttonDisconnectSession)
+        if(buttonDisconnectSession == null) Log.e(">>>>", "buttonConnectSession null")
+        buttonDisconnectSession?.isEnabled = ( param1!!.contains("true") )
+        buttonDisconnectSession?.setOnClickListener{
+            fragmentTransactionHandler?.onDisconnectSessionButtonClicked()
+        }
+
+        val buttonAsServer = thisView?.findViewById<RadioButton>(R.id.rbServer)
+        if(buttonAsServer == null) Log.e(">>>>", "buttonAsServer null")
+        buttonAsServer?.setOnClickListener{
+            fragmentTransactionHandler?.onAsServerButtonClicked()
+        }
+
+        val buttonAsClient = thisView?.findViewById<RadioButton>(R.id.rbClient)
+        if(buttonAsClient == null) Log.e(">>>>", "buttonAsClient null")
+        buttonAsClient?.setOnClickListener{
+            fragmentTransactionHandler?.onAsClientButtonClicked()
+        }
+
     }
 
     override fun onAttach(context: Context) {

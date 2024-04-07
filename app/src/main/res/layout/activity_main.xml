@@ -45,7 +45,7 @@
         android:id="@+id/frameLayoutContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/design_default_color_primary"
+        android:background="@color/design_default_color_secondary"
         android:layout_weight="1">
 
     </FrameLayout>
@@ -64,7 +64,7 @@
             android:layout_weight="1"
             android:ems="10"
             android:inputType="text"
-            android:text="Name"
+            android:text=""
             tools:ignore="HardcodedText,LabelFor,VisualLintTextFieldSize"
             android:autofillHints="message" />
 
@@ -72,7 +72,7 @@
             android:id="@+id/buttonSendMessage"
             android:layout_width="100dp"
             android:layout_height="match_parent"
-            android:text="Button"
+            android:text="Send"
             tools:ignore="HardcodedText" />
     </LinearLayout>
 </LinearLayout>

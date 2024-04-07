@@ -17,14 +17,16 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="RadioButton" />
+            android:text="@string/server"
+            tools:ignore="VisualLintButtonSize" />
 
         <RadioButton
             android:id="@+id/rbClient"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="RadioButton" />
+            android:text="@string/client"
+            tools:ignore="VisualLintButtonSize" />
     </RadioGroup>
 
     <LinearLayout
@@ -37,32 +39,54 @@
             android:id="@+id/textView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="TextView"
-            android:textSize="20sp" />
+            android:text="@string/room_name"
+            android:textSize="17sp" />
 
         <EditText
             android:id="@+id/editRoomName"
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:autofillHints="room name"
             android:ems="10"
             android:inputType="text"
+            android:text=""
             android:textSize="20sp"
-            android:text="Name" />
+            tools:ignore="LabelFor,SpeakableTextPresentCheck,VisualLintTextFieldSize" />
     </LinearLayout>
 
-    <Button
-        android:layout_margin="15dp"
-        android:id="@+id/buttonConnect"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Button" />
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/buttonConnectSession"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:text="@string/connect"
+            android:background="@color/design_default_color_primary"
+            style="@style/CustomBorderlessButtonWithColorPrimary"/>
+
+        <Button
+            android:id="@+id/buttonDisconnectSession"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_margin="15dp"
+            android:text="@string/disconnect"
+            android:background="@color/design_default_color_primary"
+            style="@style/CustomBorderlessButtonWithColorPrimary" />
+    </LinearLayout>
 
     <Button
         android:id="@+id/buttonSettingCompleted"
         android:layout_margin="15dp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="To Home" />
+        android:text="@string/home_screen"
+        tools:ignore="VisualLintButtonSize" />
+
 </LinearLayout>
