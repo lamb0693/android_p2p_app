@@ -35,6 +35,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.lamb0693.p2papp.databinding.ActivityMainBinding
 import com.example.lamb0693.p2papp.fragment.HomeFragment
 import com.example.lamb0693.p2papp.fragment.SettingFragment
+import com.example.lamb0693.p2papp.fragment.TestFragment
 import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ServerSocketThread
@@ -64,7 +65,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
     private var asServer : Boolean? =null
 
     //socketThread
-    private var serverSocketAddress : InetSocketAddress? = null
+    private lateinit var serverSocketAddress : InetSocketAddress
     private var serverSocketThread : ServerSocketThread? =  null
     private var clientSocketThread : ClientSocketThread? =  null
 
@@ -164,11 +165,18 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
                 override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
                     val receivedMessage = String(message, Charsets.UTF_8)
                     Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage, Setting currentPeerHandle")
+                    currentPeerHandle = peerHandle
                     if(receivedMessage.contains("PEER_HANDLE_IS_SET")){
-                        currentPeerHandle = peerHandle
-                        initServerSocket()
+//                        initServerSocket()
                         sendMessageViaSession("SEND_SERVER_INFO")
                     }
+
+                    //connection 된 것으로 처리
+                    runOnUiThread {
+                        viewModel.setWifiAwareConnected(true)
+                        setButtonConnection(true)
+                    }
+
                     Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                 }
                 override fun onSessionTerminated() {
@@ -204,6 +212,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
                     val messageToSend = "PEER_HANDLE_IS_SET"
                     currentPeerHandle = peerHandle
 
+                    //connection 된 것으로 처리
+                    runOnUiThread {
+                        viewModel.setWifiAwareConnected(true)
+                        setButtonConnection(true)
+                    }
+
                     // send Message
                     sendMessageViaSession(messageToSend)
                 }
@@ -211,10 +225,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
                 override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
                     val receivedMessage = String(message, Charsets.UTF_8)
                     Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage")
-                    if(receivedMessage.contains("SEND_SERVER_INFO")) {
-                        currentPeerHandle = peerHandle
-                        connectToServerSocket()
-                    }
+                    currentPeerHandle = peerHandle
+//                    if(receivedMessage.contains("SEND_SERVER_INFO")) {
+//                        connectToServerSocket()
+//                    }
                     Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                 }
                 override fun onSessionTerminated() {
@@ -259,11 +273,26 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
                 Log.i(">>>>", "NetworkCallback onAvailable")
                 Toast.makeText(this@MainActivity, "Socket network available", Toast.LENGTH_LONG).show()
 
-                // connection 된 것으로 처리
-                runOnUiThread {
-                    viewModel.setWifiAwareConnected(true)
-                    setButtonConnection(true)
+                // ServerSocketThread가 만들어 져 있지 않으면
+                // ServerSocketThread를 만들고 시작시킴
+                try{
+                    if(serverSocketThread == null) {
+                        serverSocketThread = ServerSocketThread(this@MainActivity, this@MainActivity)
+                        serverSocketThread?.also{
+                            it.start()
+//                            runOnUiThread{
+//                                bindMain.btnSendViaSocket.isEnabled = true
+//                            }
+                        }
+                    }
+                } catch ( e : Exception){
+                    Log.e(">>>>", "starting socket thread exception : ${e.message}")
                 }
+                // connection 된 것으로 처리
+//                runOnUiThread {
+//                    viewModel.setWifiAwareConnected(true)
+//                    setButtonConnection(true)
+//                }
             }
             override fun onCapabilitiesChanged(
                 network: Network,
@@ -275,16 +304,17 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i(">>>>", "NetworkCallback onLost")
-                removeCurrentWifiAwareSession()
-                runOnUiThread {
-                    viewModel.setWifiAwareConnected(false)
-                    setButtonConnection(false)
-                }
+//                removeCurrentWifiAwareSession()
+//                runOnUiThread {
+//                    viewModel.setWifiAwareConnected(false)
+//                    setButtonConnection(false)
+//                }
             }
         }
 
         connectivityManager.requestNetwork(myNetworkRequest, networkCallback)
     }
+
 
     @RequiresApi(Build.VERSION_CODES.Q)
     fun connectToServerSocket() {
@@ -323,22 +353,36 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
 
                 val peerAwareInfo = networkCapabilities.transportInfo as WifiAwareNetworkInfo
                 serverSocketAddress =InetSocketAddress(peerAwareInfo.peerIpv6Addr, Constant.PORT_NUMBER)
-                // connection 된 것으로 처리
-                runOnUiThread {
-                    viewModel.setWifiAwareConnected(true)
-                    setButtonConnection(true)
+
+                if(clientSocketThread == null){
+                    try{
+                        clientSocketThread = ClientSocketThread(this@MainActivity,
+                            serverSocketAddress, this@MainActivity)
+                        clientSocketThread?.also{
+                            it.start()
+//                            runOnUiThread{
+//                                bindMain.btnSendViaSocket.isEnabled = true
+//                            }
+                        }
+                    } catch(e : Exception){
+                        Log.e(">>>>", "clientSocket : ${e.message}")
+                    }
                 }
+                // connection 된 것으로 처리
+//                runOnUiThread {
+//                    viewModel.setWifiAwareConnected(true)
+//                    setButtonConnection(true)
+//                }
                 Toast.makeText(this@MainActivity, "Got Server Address", Toast.LENGTH_LONG).show()
             }
-
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i(">>>>", "NetworkCallback onLost")
-                removeCurrentWifiAwareSession()
-                runOnUiThread {
-                    viewModel.setWifiAwareConnected(false)
-                    setButtonConnection(false)
-                }
+//                removeCurrentWifiAwareSession()
+//                runOnUiThread {
+//                    viewModel.setWifiAwareConnected(false)
+//                    setButtonConnection(false)
+//                }
             }
         }
         connectivityManager.requestNetwork(myNetworkRequest,
@@ -390,7 +434,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
             currentWifiAwareSession?.close()
             currentWifiAwareSession = null
             currentPeerHandle = null
-            serverSocketAddress = null
         } catch (e: Exception) {
             Log.e(">>>>", "removeWifiAwareSession : ${e.message}")
         }
@@ -401,6 +444,13 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
         }
     }
 
+    private fun isSocketConnectionPossible() : Boolean {
+        if (asServer == null) return false
+        if (publishDiscoverySession==null && subscribeDiscoverySession==null) return false
+        if (currentPeerHandle == null) return false
+        return true
+    }
+
     @RequiresApi(Build.VERSION_CODES.TIRAMISU)
     override fun onResume() {
         registerReceiver(wifiAwareReceiver, intentFilter, RECEIVER_NOT_EXPORTED)
@@ -408,6 +458,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
     }
 
     override fun onChangeFragment(newFragment: Fragment, tagName : String) {
+        Log.i(">>>>", "onChangeFragment")
         val fragmentTransaction = fragmentManager.beginTransaction()
         fragmentTransaction.replace(R.id.frameLayoutContainer, newFragment, tagName)
         //fragmentTransaction.addToBackStack(null) // Optional: add transaction to back stack
@@ -436,6 +487,22 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
     override fun onAsClientButtonClicked() {
         Log.i(">>>>", "AsClient Button is clicked")
         asServer = false
+    }
+
+    @RequiresApi(Build.VERSION_CODES.Q)
+    override fun onGame1ButtonClicked() {
+        if(isSocketConnectionPossible()) {
+            if(asServer!!) initServerSocket()
+            else connectToServerSocket()
+
+            TestFragment.newInstance("val1", "val2").apply {
+                setHomeFragment(homeFragment)
+                onChangeFragment(this, "TestFragment")
+            }
+        } else {
+            Toast.makeText(this, "connect wifi aware network first",
+                Toast.LENGTH_SHORT).show()
+        }
     }
 
     private val permissionLauncher = registerForActivityResult(

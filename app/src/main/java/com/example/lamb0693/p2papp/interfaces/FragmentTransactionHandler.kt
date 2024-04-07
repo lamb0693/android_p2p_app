@@ -8,4 +8,5 @@ interface FragmentTransactionHandler {
     fun onDisconnectSessionButtonClicked()
     fun onAsServerButtonClicked()
     fun onAsClientButtonClicked()
+    fun onGame1ButtonClicked()
 }
