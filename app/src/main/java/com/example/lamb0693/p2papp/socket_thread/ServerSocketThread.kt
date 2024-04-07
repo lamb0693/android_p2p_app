@@ -2,6 +2,7 @@ package com.example.lamb0693.p2papp.socket_thread
 
 import android.content.Context
 import android.util.Log
+import com.example.lamb0693.p2papp.Constant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -23,7 +24,7 @@ class ServerSocketThread (private val context: Context, private val messageCallb
         Log.i(">>>>", "ServerSocketThread Thread Started")
 
         try {
-            serverSocket = ServerSocket(8888)
+            serverSocket = ServerSocket(Constant.PORT_NUMBER)
 
             serverSocket?.also { serverSocket1 ->
                 clientSocket = serverSocket1.accept()
