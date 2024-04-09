@@ -11,8 +11,7 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
 
-class ClientSocketThread (val context: Context,
-                          private val host : InetSocketAddress,
+class ClientSocketThread (private val host : InetSocketAddress,
                           private val messageCallback: ThreadMessageCallback
 ) : Thread() {
     private lateinit var socket : Socket
@@ -34,7 +33,7 @@ class ClientSocketThread (val context: Context,
             messageCallback.onThreadStarted()
 
             // Send message to the server (group owner)
-            sendMessageToSocket("hello from client through socket")
+            sendMessageToServerViaSocket("Hello.. from client")
 
             while(isRunning){
                 val buffer = ByteArray(1024)
@@ -42,8 +41,9 @@ class ClientSocketThread (val context: Context,
                 if (bytesRead != null && bytesRead > 0) {
                     val receivedMessage = String(buffer, 0, bytesRead)
                     // Handle the received message
-                    Log.i(">>>>",  "ReceivedMessage : $receivedMessage")
+                    Log.i(">>>>",  "ClientThread ReceivedMessage : $receivedMessage")
 
+                    // Fragment에 message 전달
                     messageCallback.onMessageReceivedFromThread(receivedMessage)
                     if(receivedMessage == "quit") isRunning = false
                 }
@@ -65,18 +65,21 @@ class ClientSocketThread (val context: Context,
         messageCallback.onThreadTerminated()
     }
 
-    private fun sendMessageToSocket(message: String): Unit {
+    // Thread 에서 ServerThread로 message 보냄
+    private fun sendMessageToServerViaSocket(message: String): Unit {
         try{
-            //val strMessage = "client : $message << via socket"
             outputStream?.write(message.toByteArray())
+            Log.i(">>>>", "sendMessageToServerViaSocket@ClientSocketThred sended message $message to ClientSocket")
         } catch(e:Exception) {
             Log.e(">>>>","sendMessage in socket thread : ${e.message}")
         }
     }
 
-    fun sendMessageFromMainThread(message : String) {
+    // Client 용 Fragment 에서 Server 로 보내는 메시지 가 옴
+    fun onMessageFromClientToServer(message : String) {
+        Log.i(">>>>","onMessageFromClientToServer@clintSocketThread : $message")
         CoroutineScope(Dispatchers.IO).launch {
-            sendMessageToSocket(message)
+            sendMessageToServerViaSocket(message)
         }
     }
 }

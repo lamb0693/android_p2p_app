@@ -1,6 +1,5 @@
 package com.example.lamb0693.p2papp.socket_thread
 
-import android.content.Context
 import android.util.Log
 import com.example.lamb0693.p2papp.Constant
 import kotlinx.coroutines.CoroutineScope
@@ -10,8 +9,10 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
+import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 
-class ServerSocketThread (private val context: Context, private val messageCallback: ThreadMessageCallback) : Thread(){
+
+class ServerSocketThread(private val messageCallback: ThreadMessageCallback) : Thread(){
     private var serverSocket: ServerSocket? = null
     private var connectedSocket : Socket? = null
 
@@ -33,7 +34,7 @@ class ServerSocketThread (private val context: Context, private val messageCallb
                     inputStream = it.getInputStream()
                     outputStream = it.getOutputStream()
 
-                    sendMessageToSocket("hello from server through socket")
+                    sendMessageToClientViaSocket("Hello.. from Server")
 
                     while(isRunning){
                         val buffer = ByteArray(1024)
@@ -41,14 +42,17 @@ class ServerSocketThread (private val context: Context, private val messageCallb
                         if (bytesRead != null && bytesRead > 0) {
                             val receivedMessage = String(buffer, 0, bytesRead)
                             // Handle the received message
-                            Log.i(">>>>",  "ReceivedMessage : $receivedMessage")
+                            Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
                             if(receivedMessage == "CLICKED"){
                                 charX +=10
                                 sendGameDataToFragments()
                             } else {
                                 messageCallback.onMessageReceivedFromThread(receivedMessage)
                             }
-                            if(receivedMessage == "quit") isRunning = false
+                            if(receivedMessage == "quit") {
+                                sendMessageToClientViaSocket("quit")
+                                isRunning = false
+                            }
                         }
                     }
                 }
@@ -65,34 +69,40 @@ class ServerSocketThread (private val context: Context, private val messageCallb
         messageCallback.onThreadTerminated()
     }
 
-    private fun sendMessageToSocket(message: String): Unit {
+    private fun sendMessageToClientViaSocket(message: String): Unit {
         try{
-            //val strMessage = "client : $message << via socket"
             outputStream?.write(message.toByteArray())
         } catch(e:Exception) {
-            Log.e(">>>>","sendMessage in socket thread : ${e.message}")
+            Log.e(">>>>","sendMessageToClientViaSocket@serverSocketThread exception : ${e.message}")
         }
     }
 
-    // main Thread에서 client에게 message 보내는 용도
-    fun sendMessageFromMainThread(message : String) {
+    // server Fragment에서 client에게 message 보내는 용도
+    fun onMessageFromFragmentToClient(message : String) {
         CoroutineScope(Dispatchers.IO).launch {
-            sendMessageToSocket(message)
+            sendMessageToClientViaSocket(message)
         }
     }
 
-    // server역할의 main Thread에서 server 에 data 전달
-    fun onMessageFromMain(message : String) {
-        if(message == "CLICKED"){
-            charX +=10
-            sendGameDataToFragments()
+    // server역할의 Fragmentd에서 server 에 GameData 전달
+    fun onGameDataFromServerFragment(message : String) {
+        Log.i(">>>>", "onGameDataFromServerFragment : $message")
+        CoroutineScope(Dispatchers.IO).launch {
+            if (message == "CLICKED") {
+                charX += 10
+                sendGameDataToFragments()
+            }
+            if (message == "quit") {
+                sendMessageToClientViaSocket("quit")
+                isRunning = false
+            }
         }
     }
 
     private fun sendGameDataToFragments(){
         synchronized(this){
             messageCallback.onMessageReceivedFromThread("charx:$charX")
-            sendMessageToSocket("charx:10")
+            sendMessageToClientViaSocket("charx:$charX")
         }
     }
 
