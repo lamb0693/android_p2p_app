@@ -39,10 +39,9 @@ import com.example.lamb0693.p2papp.fragment.TestFragment
 import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ServerSocketThread
-import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 import java.net.InetSocketAddress
 
-class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMessageCallback{
+class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
 
     private lateinit var bindMain : ActivityMainBinding
     private lateinit var viewModel : MainViewModel
@@ -248,11 +247,15 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
 
     @RequiresApi(Build.VERSION_CODES.Q)
     fun initServerSocket(){
-        if(asServer == null || asServer==false) return
-        Log.e(">>>>", "asServer ==null || asServer==false in initServerSocket()")
+        if(asServer == null || asServer==false) {
+            Log.e(">>>>", "asServer ==null || asServer==false in initServerSocket()")
+            return
+        }
 
-        if(publishDiscoverySession == null || currentPeerHandle == null) return
-        Log.e(">>>>", "publishDiscoverySession ==null || peerHandle == null in initServerSocket()")
+        if(publishDiscoverySession == null || currentPeerHandle == null){
+            Log.e(">>>>", "publishDiscoverySession ==null || peerHandle == null in initServerSocket()")
+            return
+        }
 
         Log.i(">>>>", "init serverSocket")
         // WifiAwareNetworkSpecifier 생성
@@ -277,7 +280,8 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
                 // ServerSocketThread를 만들고 시작시킴
                 try{
                     if(serverSocketThread == null) {
-                        serverSocketThread = ServerSocketThread(this@MainActivity, this@MainActivity)
+                        serverSocketThread = ServerSocketThread(this@MainActivity,
+                            supportFragmentManager.findFragmentById(R.id.frameLayoutContainer) as TestFragment)
                         serverSocketThread?.also{
                             it.start()
 //                            runOnUiThread{
@@ -304,7 +308,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i(">>>>", "NetworkCallback onLost")
-//                removeCurrentWifiAwareSession()
+                removeCurrentSocketConnection()
 //                runOnUiThread {
 //                    viewModel.setWifiAwareConnected(false)
 //                    setButtonConnection(false)
@@ -318,11 +322,15 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
 
     @RequiresApi(Build.VERSION_CODES.Q)
     fun connectToServerSocket() {
-        if(asServer == null || asServer==true) return
-        Log.e(">>>>", "asServer ==null || asServer==true in connectToServerSocket()")
+        if(asServer == null || asServer==true){
+            Log.e(">>>>", "asServer ==null || asServer==true in connectToServerSocket()")
+            return
+        }
 
-        if(subscribeDiscoverySession == null || currentPeerHandle == null) return
-        Log.e(">>>>", "subscribeDiscoverySession ==null || peerHandle == null in connectToServerSocket()")
+        if(subscribeDiscoverySession == null || currentPeerHandle == null) {
+            Log.e(">>>>", "subscribeDiscoverySession ==null || peerHandle == null in connectToServerSocket()")
+            return
+        }
 
         Log.i(">>>>", "init connectToServerSocket")
 
@@ -357,7 +365,8 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
                 if(clientSocketThread == null){
                     try{
                         clientSocketThread = ClientSocketThread(this@MainActivity,
-                            serverSocketAddress, this@MainActivity)
+                            serverSocketAddress,
+                            supportFragmentManager.findFragmentById(R.id.frameLayoutContainer) as TestFragment)
                         clientSocketThread?.also{
                             it.start()
 //                            runOnUiThread{
@@ -378,7 +387,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i(">>>>", "NetworkCallback onLost")
-//                removeCurrentWifiAwareSession()
+                removeCurrentSocketConnection()
 //                runOnUiThread {
 //                    viewModel.setWifiAwareConnected(false)
 //                    setButtonConnection(false)
@@ -419,9 +428,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
         }
 
         if(asServer!!) {
-            serverSocketThread!!.sendMessageFromMainThread("server : $message")
+            serverSocketThread!!.sendMessageFromMainThread(message)
         } else {
-            clientSocketThread!!.sendMessageFromMainThread("client : $message")
+            clientSocketThread!!.sendMessageFromMainThread(message)
         }
     }
 
@@ -444,6 +453,11 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
         }
     }
 
+    private fun removeCurrentSocketConnection(){
+        clientSocketThread = null
+        serverSocketThread = null
+    }
+
     private fun isSocketConnectionPossible() : Boolean {
         if (asServer == null) return false
         if (publishDiscoverySession==null && subscribeDiscoverySession==null) return false
@@ -457,8 +471,16 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
         super.onResume()
     }
 
+    // Fragment 에 따라 Socket connection 을 정리
     override fun onChangeFragment(newFragment: Fragment, tagName : String) {
         Log.i(">>>>", "onChangeFragment")
+
+        //현재 Fragment 가 Socket 을 사용 중이면 초기화
+        val currentFragment = supportFragmentManager.findFragmentById(R.id.frameLayoutContainer)
+        if(currentFragment is TestFragment){
+            removeCurrentSocketConnection()
+        }
+
         val fragmentTransaction = fragmentManager.beginTransaction()
         fragmentTransaction.replace(R.id.frameLayoutContainer, newFragment, tagName)
         //fragmentTransaction.addToBackStack(null) // Optional: add transaction to back stack
@@ -505,6 +527,16 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
         }
     }
 
+    fun onGameData(data : String){
+        if(asServer == null) return
+
+        if(asServer!!) {
+            serverSocketThread!!.onMessageFromMain(data)
+        } else {
+            sendMessageViaSocket(data)
+        }
+    }
+
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) {
@@ -537,24 +569,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler, ThreadMes
         } else {
             Log.i(">>>>", "All Permission Permitted, No need to start permission Launcher")
         }
-    }
-
-    override fun onMessageReceivedFromThread(message: String) {
-        Log.i(">>>>", "from thread : $message")
-        // 일단 homeFragment의 TextView에 추가하고
-
-        // homeFragment가 아니면 Toast에
-
-    }
-
-    override fun onThreadTerminated() {
-        Log.i(">>>>", "from thread : terminating")
-        bindMain.imageConnectStatus.setImageResource(android.R.drawable.button_onoff_indicator_off)
-    }
-
-    override fun onThreadStarted() {
-        Log.i(">>>>", "from thread : started")
-        bindMain.imageConnectStatus.setImageResource(android.R.drawable.button_onoff_indicator_on)
     }
 
     @Deprecated("Deprecated in Java")

@@ -27,8 +27,8 @@
             android:text="Home" />
     </LinearLayout>
 
-    <View
-        android:id="@+id/view"
+    <view class="com.example.lamb0693.p2papp.fragment.TestFragment$TestGameView"
+        android:id="@+id/viewTestGame"
         android:background="@color/design_default_color_primary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />

@@ -8,18 +8,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.io.OutputStream
-import java.net.InetSocketAddress
 import java.net.ServerSocket
 import java.net.Socket
-import java.net.SocketTimeoutException
 
 class ServerSocketThread (private val context: Context, private val messageCallback: ThreadMessageCallback) : Thread(){
     private var serverSocket: ServerSocket? = null
-    private var clientSocket : Socket? = null
+    private var connectedSocket : Socket? = null
 
     private var outputStream: OutputStream? = null
     private var inputStream : InputStream? = null
     private var isRunning = true
+
+    private var charX = 100
     override fun run() {
         Log.i(">>>>", "ServerSocketThread Thread Started")
 
@@ -27,13 +27,13 @@ class ServerSocketThread (private val context: Context, private val messageCallb
             serverSocket = ServerSocket(Constant.PORT_NUMBER)
 
             serverSocket?.also { serverSocket1 ->
-                clientSocket = serverSocket1.accept()
-                Log.i(">>>>" , "server socket ; Accepted  clientSocket = $clientSocket")
-                clientSocket?.also {
+                connectedSocket = serverSocket1.accept()
+                Log.i(">>>>" , "server socket ; Accepted  clientSocket = $connectedSocket")
+                connectedSocket?.also {
                     inputStream = it.getInputStream()
                     outputStream = it.getOutputStream()
 
-                    sendMessage("hello from server through socket")
+                    sendMessageToSocket("hello from server through socket")
 
                     while(isRunning){
                         val buffer = ByteArray(1024)
@@ -42,7 +42,12 @@ class ServerSocketThread (private val context: Context, private val messageCallb
                             val receivedMessage = String(buffer, 0, bytesRead)
                             // Handle the received message
                             Log.i(">>>>",  "ReceivedMessage : $receivedMessage")
-                            messageCallback.onMessageReceivedFromThread(receivedMessage)
+                            if(receivedMessage == "CLICKED"){
+                                charX +=10
+                                sendGameDataToFragments()
+                            } else {
+                                messageCallback.onMessageReceivedFromThread(receivedMessage)
+                            }
                             if(receivedMessage == "quit") isRunning = false
                         }
                     }
@@ -53,26 +58,42 @@ class ServerSocketThread (private val context: Context, private val messageCallb
         } finally {
             outputStream?.close()
             inputStream?.close()
-            clientSocket?.close()
+            connectedSocket?.close()
             serverSocket?.close()
         }
         Log.i(">>>>", "Server Thread terminating...")
         messageCallback.onThreadTerminated()
     }
 
-    private fun sendMessage(message: String): Unit {
+    private fun sendMessageToSocket(message: String): Unit {
         try{
-            val strMessage = "server : $message << via socket"
-            outputStream?.write(strMessage.toByteArray())
+            //val strMessage = "client : $message << via socket"
+            outputStream?.write(message.toByteArray())
         } catch(e:Exception) {
             Log.e(">>>>","sendMessage in socket thread : ${e.message}")
         }
-
     }
 
+    // main Thread에서 client에게 message 보내는 용도
     fun sendMessageFromMainThread(message : String) {
         CoroutineScope(Dispatchers.IO).launch {
-            sendMessage(message)
+            sendMessageToSocket(message)
         }
     }
+
+    // server역할의 main Thread에서 server 에 data 전달
+    fun onMessageFromMain(message : String) {
+        if(message == "CLICKED"){
+            charX +=10
+            sendGameDataToFragments()
+        }
+    }
+
+    private fun sendGameDataToFragments(){
+        synchronized(this){
+            messageCallback.onMessageReceivedFromThread("charx:$charX")
+            sendMessageToSocket("charx:10")
+        }
+    }
+
 }

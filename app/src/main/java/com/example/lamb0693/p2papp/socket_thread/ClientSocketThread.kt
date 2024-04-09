@@ -34,7 +34,7 @@ class ClientSocketThread (val context: Context,
             messageCallback.onThreadStarted()
 
             // Send message to the server (group owner)
-            sendMessage("hello from client through socket")
+            sendMessageToSocket("hello from client through socket")
 
             while(isRunning){
                 val buffer = ByteArray(1024)
@@ -43,6 +43,7 @@ class ClientSocketThread (val context: Context,
                     val receivedMessage = String(buffer, 0, bytesRead)
                     // Handle the received message
                     Log.i(">>>>",  "ReceivedMessage : $receivedMessage")
+
                     messageCallback.onMessageReceivedFromThread(receivedMessage)
                     if(receivedMessage == "quit") isRunning = false
                 }
@@ -64,19 +65,18 @@ class ClientSocketThread (val context: Context,
         messageCallback.onThreadTerminated()
     }
 
-    private fun sendMessage(message: String): Unit {
+    private fun sendMessageToSocket(message: String): Unit {
         try{
-            val strMessage = "client : $message << via socket"
-            outputStream?.write(strMessage.toByteArray())
+            //val strMessage = "client : $message << via socket"
+            outputStream?.write(message.toByteArray())
         } catch(e:Exception) {
             Log.e(">>>>","sendMessage in socket thread : ${e.message}")
         }
-
     }
 
     fun sendMessageFromMainThread(message : String) {
         CoroutineScope(Dispatchers.IO).launch {
-            sendMessage(message)
+            sendMessageToSocket(message)
         }
     }
 }
