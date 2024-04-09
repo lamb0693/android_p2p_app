@@ -225,9 +225,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
                     val receivedMessage = String(message, Charsets.UTF_8)
                     Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage")
                     currentPeerHandle = peerHandle
-//                    if(receivedMessage.contains("SEND_SERVER_INFO")) {
-//                        connectToServerSocket()
-//                    }
+                    if(receivedMessage.contains("INVITATION")) {
+                        showInvitationAlertDialog()
+                    }
                     Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                 }
                 override fun onSessionTerminated() {
@@ -244,160 +244,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
             }, null)
         }
     }
-
-//    @RequiresApi(Build.VERSION_CODES.Q)
-//    fun initServerSocket(){
-//        if(asServer == null || asServer==false) {
-//            Log.e(">>>>", "asServer ==null || asServer==false in initServerSocket()")
-//            return
-//        }
-//
-//        if(publishDiscoverySession == null || currentPeerHandle == null){
-//            Log.e(">>>>", "publishDiscoverySession ==null || peerHandle == null in initServerSocket()")
-//            return
-//        }
-//
-//        Log.i(">>>>", "init serverSocket")
-//        // WifiAwareNetworkSpecifier 생성
-//        val networkSpecifier = WifiAwareNetworkSpecifier.Builder(publishDiscoverySession!!, currentPeerHandle!!)
-//            .setPskPassphrase("12340987").build()
-//
-//        // WifiAware 를 이용 하는 NetworkRequest 생성
-//        val myNetworkRequest = NetworkRequest.Builder()
-//            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-//            .setNetworkSpecifier(networkSpecifier)
-//            .build()
-//        Log.i(">>>>", "networkRequest :  $myNetworkRequest in initServerSocket()")
-//
-//        // 콜백 만들고 등록
-//        val networkCallback = object : ConnectivityManager.NetworkCallback() {
-//            override fun onAvailable(network: Network) {
-//                super.onAvailable(network)
-//                Log.i(">>>>", "NetworkCallback onAvailable")
-//                Toast.makeText(this@MainActivity, "Socket network available", Toast.LENGTH_LONG).show()
-//
-//                // ServerSocketThread가 만들어 져 있지 않으면
-//                // ServerSocketThread를 만들고 시작시킴
-//                try{
-//                    if(serverSocketThread == null) {
-//                        serverSocketThread = ServerSocketThread(this@MainActivity,
-//                            supportFragmentManager.findFragmentById(R.id.frameLayoutContainer) as TestFragment)
-//                        serverSocketThread?.also{
-//                            it.start()
-////                            runOnUiThread{
-////                                bindMain.btnSendViaSocket.isEnabled = true
-////                            }
-//                        }
-//                    }
-//                } catch ( e : Exception){
-//                    Log.e(">>>>", "starting socket thread exception : ${e.message}")
-//                }
-//                // connection 된 것으로 처리
-////                runOnUiThread {
-////                    viewModel.setWifiAwareConnected(true)
-////                    setButtonConnection(true)
-////                }
-//            }
-//            override fun onCapabilitiesChanged(
-//                network: Network,
-//                networkCapabilities: NetworkCapabilities
-//            ) {
-//                super.onCapabilitiesChanged(network, networkCapabilities)
-//                Log.i(">>>>", "NetworkCallback onCapabilitiesChanged network : $network")
-//            }
-//            override fun onLost(network: Network) {
-//                super.onLost(network)
-//                Log.i(">>>>", "NetworkCallback onLost")
-//                removeCurrentSocketConnection()
-////                runOnUiThread {
-////                    viewModel.setWifiAwareConnected(false)
-////                    setButtonConnection(false)
-////                }
-//            }
-//        }
-//
-//        connectivityManager.requestNetwork(myNetworkRequest, networkCallback)
-//    }
-
-
-//    @RequiresApi(Build.VERSION_CODES.Q)
-//    fun connectToServerSocket() {
-//        if(asServer == null || asServer==true){
-//            Log.e(">>>>", "asServer ==null || asServer==true in connectToServerSocket()")
-//            return
-//        }
-//
-//        if(subscribeDiscoverySession == null || currentPeerHandle == null) {
-//            Log.e(">>>>", "subscribeDiscoverySession ==null || peerHandle == null in connectToServerSocket()")
-//            return
-//        }
-//
-//        Log.i(">>>>", "init connectToServerSocket")
-//
-//        val networkSpecifier = WifiAwareNetworkSpecifier.Builder(subscribeDiscoverySession!!, currentPeerHandle!!)
-//            .setPskPassphrase("12340987")
-//            .build()
-//
-//        Log.i(">>>>", "connecting to server socket $networkSpecifier")
-//
-//        val myNetworkRequest = NetworkRequest.Builder()
-//            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-//            .setNetworkSpecifier(networkSpecifier)
-//            .build()
-//
-//        val networkCallback = object : ConnectivityManager.NetworkCallback() {
-//            override fun onAvailable(network: Network) {
-//                super.onAvailable(network)
-//                Log.i(">>>>", "NetworkCallback onAvailable")
-//                Toast.makeText(this@MainActivity, "Socket network available", Toast.LENGTH_LONG)
-//                    .show()
-//            }
-//            override fun onCapabilitiesChanged(
-//                network: Network,
-//                networkCapabilities: NetworkCapabilities
-//            ) {
-//                super.onCapabilitiesChanged(network, networkCapabilities)
-//                Log.i(">>>>", "NetworkCallback onCapabilitiesChanged network : $network")
-//
-//                val peerAwareInfo = networkCapabilities.transportInfo as WifiAwareNetworkInfo
-//                serverSocketAddress =InetSocketAddress(peerAwareInfo.peerIpv6Addr, Constant.PORT_NUMBER)
-//
-//                if(clientSocketThread == null){
-//                    try{
-//                        clientSocketThread = ClientSocketThread(this@MainActivity,
-//                            serverSocketAddress,
-//                            supportFragmentManager.findFragmentById(R.id.frameLayoutContainer) as TestFragment)
-//                        clientSocketThread?.also{
-//                            it.start()
-////                            runOnUiThread{
-////                                bindMain.btnSendViaSocket.isEnabled = true
-////                            }
-//                        }
-//                    } catch(e : Exception){
-//                        Log.e(">>>>", "clientSocket : ${e.message}")
-//                    }
-//                }
-//                // connection 된 것으로 처리
-////                runOnUiThread {
-////                    viewModel.setWifiAwareConnected(true)
-////                    setButtonConnection(true)
-////                }
-//                Toast.makeText(this@MainActivity, "Got Server Address", Toast.LENGTH_LONG).show()
-//            }
-//            override fun onLost(network: Network) {
-//                super.onLost(network)
-//                Log.i(">>>>", "NetworkCallback onLost")
-//                removeCurrentSocketConnection()
-////                runOnUiThread {
-////                    viewModel.setWifiAwareConnected(false)
-////                    setButtonConnection(false)
-////                }
-//            }
-//        }
-//        connectivityManager.requestNetwork(myNetworkRequest,
-//            networkCallback as ConnectivityManager.NetworkCallback
-//        )
-//    }
 
     fun sendMessageViaSession(message : String){
         if(publishDiscoverySession == null && subscribeDiscoverySession == null) {
@@ -420,19 +266,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
         }
 
     }
-
-//    private fun sendMessageViaSocket(message : String){
-//        if(serverSocketThread == null && clientSocketThread == null) {
-//            Log.e(">>>>", "SocketThread null in sendMessageViaSocket()")
-//            return
-//        }
-//
-//        if(asServer!!) {
-//            serverSocketThread!!.sendMessageFromMainThread(message)
-//        } else {
-//            clientSocketThread!!.sendMessageFromMainThread(message)
-//        }
-//    }
 
     fun removeCurrentWifiAwareSession(){
         try{
@@ -507,6 +340,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onGame1ButtonClicked() {
+        if(!asServer!!) {
+            SimpleConfirmDialog(this, "알림","방을 생성하려면 서버역할이어야 함").showDialog()
+            return
+        }
         if(isSocketConnectionPossible()) {
             TestFragment.newInstance("val1", "val2").apply {
                 setHomeFragment(homeFragment)
@@ -517,16 +354,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
                 Toast.LENGTH_SHORT).show()
         }
     }
-
-//    fun onGameData(data : String){
-//        if(asServer == null) return
-//
-//        if(asServer!!) {
-//            serverSocketThread!!.onMessageFromMain(data)
-//        } else {
-//            sendMessageViaSocket(data)
-//        }
-//    }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
@@ -560,6 +387,27 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
         } else {
             Log.i(">>>>", "All Permission Permitted, No need to start permission Launcher")
         }
+    }
+
+    private fun showInvitationAlertDialog() {
+        val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
+        alertDialogBuilder.setTitle("Invitation")
+        alertDialogBuilder.setMessage("You have received an invitation. Do you accept?")
+        alertDialogBuilder.setPositiveButton("Accept") { dialogInterface, _ ->
+            dialogInterface.dismiss()
+            // Handle invitation acceptance here
+            // For example, start the TestFragment
+            TestFragment.newInstance("val1", "val2").apply {
+                setHomeFragment(homeFragment)
+                onChangeFragment(this, "TestFragment")
+            }
+        }
+        alertDialogBuilder.setNegativeButton("Decline") { dialogInterface, _ ->
+            dialogInterface.dismiss()
+            // Handle invitation decline here
+        }
+        val alertDialog = alertDialogBuilder.create()
+        alertDialog.show()
     }
 
     @Deprecated("Deprecated in Java")

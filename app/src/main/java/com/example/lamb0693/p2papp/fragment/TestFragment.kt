@@ -125,7 +125,10 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if(mainActivity.asServer!!) initServerSocket()
+        if(mainActivity.asServer!!) {
+            initServerSocket()
+            mainActivity.sendMessageViaSession("INVITATION")
+        }
         else connectToServerSocket()
 
         testGameView.setOnClickListener{
