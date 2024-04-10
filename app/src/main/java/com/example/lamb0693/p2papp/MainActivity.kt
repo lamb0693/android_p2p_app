@@ -340,11 +340,11 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
 
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onGame1ButtonClicked() {
-        if(!asServer!!) {
-            SimpleConfirmDialog(this, "알림","방을 생성하려면 서버역할이어야 함").showDialog()
-            return
-        }
         if(isSocketConnectionPossible()) {
+            if(!asServer!!) {
+                SimpleConfirmDialog(this, "알림","방을 생성하려면 서버역할이어야 함").showDialog()
+                return
+            }
             TestFragment.newInstance("val1", "val2").apply {
                 setHomeFragment(homeFragment)
                 onChangeFragment(this, "TestFragment")

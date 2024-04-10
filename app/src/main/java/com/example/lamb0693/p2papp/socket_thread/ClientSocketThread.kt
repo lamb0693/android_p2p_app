@@ -11,8 +11,8 @@ import java.net.InetSocketAddress
 import java.net.Socket
 import java.net.SocketTimeoutException
 
-class ClientSocketThread (private val host : InetSocketAddress,
-                          private val messageCallback: ThreadMessageCallback
+open class ClientSocketThread (private val host : InetSocketAddress,
+                               private val messageCallback: ThreadMessageCallback
 ) : Thread() {
     private lateinit var socket : Socket
     private var outputStream: OutputStream? = null
@@ -29,8 +29,9 @@ class ClientSocketThread (private val host : InetSocketAddress,
             outputStream = socket.getOutputStream()
             inputStream = socket.getInputStream()
 
-            // main activity 에 thread 시작 알림
+            //Fragment 에 thread 시작 알림
             messageCallback.onThreadStarted()
+            messageCallback.onConnectionMade()
 
             // Send message to the server (group owner)
             sendMessageToServerViaSocket("Hello.. from client")
@@ -43,9 +44,13 @@ class ClientSocketThread (private val host : InetSocketAddress,
                     // Handle the received message
                     Log.i(">>>>",  "ClientThread ReceivedMessage : $receivedMessage")
 
-                    // Fragment에 message 전달
-                    messageCallback.onMessageReceivedFromThread(receivedMessage)
-                    if(receivedMessage == "quit") isRunning = false
+                    if(receivedMessage.startsWith("GAME_DATA")){
+                        messageCallback.onGameDataReceivedFromServerViaSocket(receivedMessage)
+                    } else if(receivedMessage == "QUIT_THREAD") {
+                        isRunning = false
+                    } else {
+                        messageCallback.onMessageReceivedFromThread(receivedMessage)
+                    }
                 }
             }
         } catch (e: SocketTimeoutException) {
@@ -81,5 +86,12 @@ class ClientSocketThread (private val host : InetSocketAddress,
         CoroutineScope(Dispatchers.IO).launch {
             sendMessageToServerViaSocket(message)
         }
+    }
+
+    fun onQuitMessageFromFragment() {
+        CoroutineScope(Dispatchers.IO).launch {
+            sendMessageToServerViaSocket("QUIT_THREAD")
+        }
+        isRunning = false
     }
 }

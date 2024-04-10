@@ -9,30 +9,29 @@ import java.io.InputStream
 import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
-import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 
 
-class ServerSocketThread(private val messageCallback: ThreadMessageCallback) : Thread(){
+open class ServerSocketThread(private val messageCallback: ThreadMessageCallback) : Thread(){
     private var serverSocket: ServerSocket? = null
     private var connectedSocket : Socket? = null
 
     private var outputStream: OutputStream? = null
     private var inputStream : InputStream? = null
-    private var isRunning = true
+    open var isRunning = true
 
-    private var charX = 100
     override fun run() {
         Log.i(">>>>", "ServerSocketThread Thread Started")
 
         try {
             serverSocket = ServerSocket(Constant.PORT_NUMBER)
 
-            serverSocket?.also { serverSocket1 ->
-                connectedSocket = serverSocket1.accept()
+            serverSocket?.also { serverSoc ->
+                connectedSocket = serverSoc.accept()
                 Log.i(">>>>" , "server socket ; Accepted  clientSocket = $connectedSocket")
                 connectedSocket?.also {
                     inputStream = it.getInputStream()
                     outputStream = it.getOutputStream()
+                    messageCallback.onConnectionMade()
 
                     sendMessageToClientViaSocket("Hello.. from Server")
 
@@ -43,16 +42,15 @@ class ServerSocketThread(private val messageCallback: ThreadMessageCallback) : T
                             val receivedMessage = String(buffer, 0, bytesRead)
                             // Handle the received message
                             Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
-                            if(receivedMessage == "CLICKED"){
-                                charX +=10
-                                sendGameDataToFragments()
-                            } else {
-                                messageCallback.onMessageReceivedFromThread(receivedMessage)
-                            }
-                            if(receivedMessage == "quit") {
-                                sendMessageToClientViaSocket("quit")
+                            if(receivedMessage.contains("ACTION")){
+                                processGameDataInServer(receivedMessage)
+                            } else if(receivedMessage == "QUIT_THREAD") {
                                 isRunning = false
                             }
+                            else {
+                                messageCallback.onMessageReceivedFromThread(receivedMessage)
+                            }
+
                         }
                     }
                 }
@@ -69,41 +67,41 @@ class ServerSocketThread(private val messageCallback: ThreadMessageCallback) : T
         messageCallback.onThreadTerminated()
     }
 
-    private fun sendMessageToClientViaSocket(message: String): Unit {
+    open fun sendMessageToClientViaSocket(message: String): Unit {
         try{
-            outputStream?.write(message.toByteArray())
+            CoroutineScope(Dispatchers.IO).launch {
+                outputStream?.write(message.toByteArray())
+            }
         } catch(e:Exception) {
             Log.e(">>>>","sendMessageToClientViaSocket@serverSocketThread exception : ${e.message}")
         }
     }
 
-    // server Fragment에서 client에게 message 보내는 용도
+    // server Fragment에서 client에게 simple message 보내는 용도
     fun onMessageFromFragmentToClient(message : String) {
         CoroutineScope(Dispatchers.IO).launch {
             sendMessageToClientViaSocket(message)
         }
     }
 
-    // server역할의 Fragmentd에서 server 에 GameData 전달
-    fun onGameDataFromServerFragment(message : String) {
-        Log.i(">>>>", "onGameDataFromServerFragment : $message")
+    fun onQuitMessageFromFragment() {
         CoroutineScope(Dispatchers.IO).launch {
-            if (message == "CLICKED") {
-                charX += 10
-                sendGameDataToFragments()
-            }
-            if (message == "quit") {
-                sendMessageToClientViaSocket("quit")
-                isRunning = false
-            }
+            sendMessageToClientViaSocket("QUIT_THREAD")
         }
+        isRunning = false
     }
 
-    private fun sendGameDataToFragments(){
-        synchronized(this){
-            messageCallback.onMessageReceivedFromThread("charx:$charX")
-            sendMessageToClientViaSocket("charx:$charX")
-        }
+    // server 역할의 Fragment 에서 server 에 GameData 전달
+    fun onGameDataFromServerFragment(strAction: String) {
+        processGameDataInServer(strAction)
+    }
+
+    // server 의 Game Data 를 모든 Fragement에 전달
+    open fun sendGameDataToFragments(){ }
+
+
+    // should Execute super function
+    open fun processGameDataInServer(strAction : String) {
     }
 
 }
