@@ -4,10 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.net.ConnectivityManager
-import android.net.Network
-import android.net.NetworkCapabilities
-import android.net.NetworkRequest
 import android.net.wifi.aware.DiscoverySessionCallback
 import android.net.wifi.aware.PeerHandle
 import android.net.wifi.aware.PublishConfig
@@ -15,8 +11,6 @@ import android.net.wifi.aware.PublishDiscoverySession
 import android.net.wifi.aware.SubscribeConfig
 import android.net.wifi.aware.SubscribeDiscoverySession
 import android.net.wifi.aware.WifiAwareManager
-import android.net.wifi.aware.WifiAwareNetworkInfo
-import android.net.wifi.aware.WifiAwareNetworkSpecifier
 import android.net.wifi.aware.WifiAwareSession
 import android.os.Build
 import android.os.Bundle
@@ -36,12 +30,10 @@ import com.example.lamb0693.p2papp.databinding.ActivityMainBinding
 import com.example.lamb0693.p2papp.fragment.HomeFragment
 import com.example.lamb0693.p2papp.fragment.SettingFragment
 import com.example.lamb0693.p2papp.fragment.TestFragment
-import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
-import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
-import com.example.lamb0693.p2papp.socket_thread.ServerSocketThread
-import java.net.InetSocketAddress
+import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
+import com.example.lamb0693.p2papp.viewmodel.MainViewModel
 
-class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
+class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
 
     private lateinit var bindMain : ActivityMainBinding
     private lateinit var viewModel : MainViewModel
@@ -61,12 +53,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
 
     // connection var
     var asServer : Boolean? =null
-
-//    private lateinit var connectivityManager : ConnectivityManager
-//    //socketThread
-//    private lateinit var serverSocketAddress : InetSocketAddress
-//    private var serverSocketThread : ServerSocketThread? =  null
-//    private var clientSocketThread : ClientSocketThread? =  null
 
     private fun registerWifiAwareReceiver() {
         intentFilter = IntentFilter(WifiAwareManager.ACTION_WIFI_AWARE_STATE_CHANGED)
@@ -114,7 +100,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
     }
 
     private fun initSystemService() {
-//        connectivityManager = getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
         wifiAwareManager= getSystemService(Context.WIFI_AWARE_SERVICE) as WifiAwareManager
     }
 
@@ -163,17 +148,22 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
                 @RequiresApi(Build.VERSION_CODES.Q)
                 override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
                     val receivedMessage = String(message, Charsets.UTF_8)
-                    Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage, Setting currentPeerHandle")
-                    currentPeerHandle = peerHandle
                     if(receivedMessage.contains("PEER_HANDLE_IS_SET")){
-//                        initServerSocket()
+                        currentPeerHandle = peerHandle
+                        runOnUiThread {
+                            viewModel.setWifiAwareConnected(true)
+                            setButtonConnection(true)
+                        }
+                        Log.i(">>>>",
+                            "onMessageReceived...$peerHandle, $receivedMessage, Setting currentPeerHandle and sending server info")
                         sendMessageViaSession("SEND_SERVER_INFO")
-                    }
-
-                    //connection 된 것으로 처리
-                    runOnUiThread {
-                        viewModel.setWifiAwareConnected(true)
-                        setButtonConnection(true)
+                    } else if (receivedMessage.contains("REFUSE_INVITATION")){
+                        val testFragment : TestFragment? = getTestFragment()
+                        if(testFragment == null) {
+                            Log.e(">>>>", "testFragment null in onMessageReceived")
+                        } else {
+                            testFragment.cancelInitServerSocket()
+                        }
                     }
 
                     Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
@@ -210,21 +200,18 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
                     Toast.makeText(this@MainActivity, "Connected to server", Toast.LENGTH_SHORT).show()
                     val messageToSend = "PEER_HANDLE_IS_SET"
                     currentPeerHandle = peerHandle
+                    sendMessageViaSession(messageToSend)
 
                     //connection 된 것으로 처리
                     runOnUiThread {
                         viewModel.setWifiAwareConnected(true)
                         setButtonConnection(true)
                     }
-
-                    // send Message
-                    sendMessageViaSession(messageToSend)
                 }
                 @RequiresApi(Build.VERSION_CODES.Q)
                 override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
                     val receivedMessage = String(message, Charsets.UTF_8)
                     Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage")
-                    currentPeerHandle = peerHandle
                     if(receivedMessage.contains("INVITATION")) {
                         showInvitationAlertDialog()
                     }
@@ -286,11 +273,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
         }
     }
 
-//    private fun removeCurrentSocketConnection(){
-//        clientSocketThread = null
-//        serverSocketThread = null
-//    }
-
     private fun isSocketConnectionPossible() : Boolean {
         if (asServer == null) return false
         if (publishDiscoverySession==null && subscribeDiscoverySession==null) return false
@@ -317,6 +299,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
     }
 
     override fun onConnectSessionButtonClicked(roomName : String) {
+        if(asServer == null || roomName.isEmpty()) {
+            SimpleConfirmDialog(this, "알림", "먼저 역할과 방이름을 설정하세요").showDialog()
+            return
+        }
         Log.i(">>>>", "ConnectSession Button is clicked")
         viewModel.setRoomName(roomName)
         attach()
@@ -389,6 +375,8 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
         }
     }
 
+    // client 만 해당
+    // refuse하면 server에게 refuse message를 보냄
     private fun showInvitationAlertDialog() {
         val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
         alertDialogBuilder.setTitle("Invitation")
@@ -404,9 +392,11 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
         }
         alertDialogBuilder.setNegativeButton("Decline") { dialogInterface, _ ->
             dialogInterface.dismiss()
-            // Handle invitation decline here
+            // server에 refuse message 보냄
+            sendMessageViaSession("REFUSE_INVITATION")
         }
         val alertDialog = alertDialogBuilder.create()
+        alertDialog.setCancelable(false)
         alertDialog.show()
     }
 
@@ -424,10 +414,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler{
             .show()
     }
 
-//    private fun getSettingFragment(): SettingFragment? {
-//        // Find the fragment by its tag
-//        return supportFragmentManager.findFragmentByTag("SettingFragment") as? SettingFragment
-//    }
+    private fun getTestFragment(): TestFragment? {
+        // Find the fragment by its tag
+        return supportFragmentManager.findFragmentByTag("TestFragment") as? TestFragment
+    }
 
     private fun setButtonConnection(connected : Boolean){
         val buttonConnect = findViewById<Button>(R.id.buttonConnectSession)

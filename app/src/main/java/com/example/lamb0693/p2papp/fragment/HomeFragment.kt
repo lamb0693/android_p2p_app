@@ -11,7 +11,7 @@ import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RadioButton
 import com.example.lamb0693.p2papp.R
-import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
+import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import java.lang.Exception
 
 // TODO: Rename parameter arguments, choose names that match

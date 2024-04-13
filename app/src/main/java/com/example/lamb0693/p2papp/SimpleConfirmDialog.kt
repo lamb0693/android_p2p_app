@@ -11,6 +11,7 @@ class SimpleConfirmDialog (context : Context, title : String, message : String) 
             // Handle the OK button click here
             dialog.dismiss()
         }
+        setCancelable(false)
     }
 
     fun showDialog(){

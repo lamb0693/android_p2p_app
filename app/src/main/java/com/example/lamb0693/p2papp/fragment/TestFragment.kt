@@ -23,14 +23,15 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import com.example.lamb0693.p2papp.Constant
 import com.example.lamb0693.p2papp.MainActivity
 import com.example.lamb0693.p2papp.R
-import com.example.lamb0693.p2papp.TestViewModel
-import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
+import com.example.lamb0693.p2papp.SimpleConfirmDialog
+import com.example.lamb0693.p2papp.viewmodel.TestViewModel
+import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
-import com.example.lamb0693.p2papp.socket_thread.ServerSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
 import com.example.lamb0693.p2papp.socket_thread.test.TestServerSocketThread
@@ -57,7 +58,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     private var homeFragment: HomeFragment? = null
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
-    lateinit var testGameView: TestGameView
+    private lateinit var testGameView: TestGameView
 
     lateinit var mainActivity : MainActivity
 
@@ -66,6 +67,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     private lateinit var serverSocketAddress : InetSocketAddress
     private var serverSocketThread : TestServerSocketThread? =  null
     private var clientSocketThread : ClientSocketThread? =  null
+
+    private var networkCallback : ConnectivityManager.NetworkCallback? =null
 
     class TestGameView @JvmOverloads constructor(
         context: Context,
@@ -118,12 +121,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         val buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
         buttonToHome?.setOnClickListener{
-            if(mainActivity.asServer!!) serverSocketThread?.onQuitMessageFromFragment()
-            else(clientSocketThread?.onQuitMessageFromFragment())
-
-            // homeFragment로 돌아감
-            homeFragment?.let { fragment ->
-                fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
+            if(testViewModel.socketConnected.value == true){
+                if(mainActivity.asServer!!) serverSocketThread?.onQuitMessageFromFragment()
+                else(clientSocketThread?.onQuitMessageFromFragment())
+            } else{
+                homeFragment?.let { fragment ->
+                    fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
+                }
             }
         }
 
@@ -136,8 +140,10 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         super.onViewCreated(view, savedInstanceState)
 
         if(mainActivity.asServer!!) {
-            initServerSocket()
+            initServerSocket()  // accept()에서 block됨
             mainActivity.sendMessageViaSession("INVITATION")
+
+
         }
         else connectToServerSocket()
 
@@ -169,9 +175,15 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         }
     }
 
-    private fun removeCurrentSocketConnection(){
-        clientSocketThread = null
-        serverSocketThread = null
+    fun cancelInitServerSocket(){
+        try{
+            // network 초기화 를 reset --> detach()에서
+            homeFragment?.let { fragment ->
+                fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
+            }
+        } catch (e : Exception) {
+            Log.e(">>>>", "error to cancelInitServerSocket() : ${e.message}")
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -188,10 +200,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         Log.i(">>>>", "init serverSocket")
 
+        serverSocketThread = TestServerSocketThread(this@TestFragment, 0L)
+
         // WifiAwareNetworkSpecifier 생성
         val networkSpecifier = WifiAwareNetworkSpecifier.Builder(
             mainActivity.publishDiscoverySession!!, mainActivity.currentPeerHandle!!)
-            .setPskPassphrase("12340987").build()
+            .setPort(serverSocketThread!!.getLocalPort())
+            .setPskPassphrase(Constant.pskParaphrase).build()
 
         // WifiAware 를 이용 하는 NetworkRequest 생성
         val myNetworkRequest = NetworkRequest.Builder()
@@ -201,19 +216,14 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         Log.i(">>>>", "networkRequest :  $myNetworkRequest in initServerSocket()")
 
         // 콜백 만들고 등록
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 Log.i(">>>>", "NetworkCallback onAvailable")
                 Toast.makeText(mainActivity, "Socket network available", Toast.LENGTH_LONG).show()
 
                 try{
-                    if(serverSocketThread == null) {
-                        serverSocketThread = TestServerSocketThread(this@TestFragment)
-                        serverSocketThread?.also{
-                            it.start()
-                        }
-                    }
+                    serverSocketThread?.start()
                 } catch ( e : Exception){
                     Log.e(">>>>", "starting socket thread exception : ${e.message}")
                 }
@@ -228,11 +238,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i(">>>>", "NetworkCallback onLost")
-                removeCurrentSocketConnection()
+                // 필요 없을 듯 removeCurrentSocketConnection()
             }
         }
 
-        connectivityManager.requestNetwork(myNetworkRequest, networkCallback)
+        networkCallback?.let{
+            connectivityManager.requestNetwork(myNetworkRequest, it)
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -251,7 +263,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         val networkSpecifier = WifiAwareNetworkSpecifier.Builder(
             mainActivity.subscribeDiscoverySession!!, mainActivity.currentPeerHandle!!)
-            .setPskPassphrase("12340987")
+            .setPskPassphrase(Constant.pskParaphrase)
             .build()
 
         Log.i(">>>>", "connecting to server socket $networkSpecifier")
@@ -261,7 +273,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             .setNetworkSpecifier(networkSpecifier)
             .build()
 
-        val networkCallback = object : ConnectivityManager.NetworkCallback() {
+        networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 Log.i(">>>>", "NetworkCallback onAvailable")
@@ -274,24 +286,26 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 Log.i(">>>>", "NetworkCallback onCapabilitiesChanged network : $network")
 
                 val peerAwareInfo = networkCapabilities.transportInfo as WifiAwareNetworkInfo
-                serverSocketAddress =InetSocketAddress(peerAwareInfo.peerIpv6Addr, Constant.PORT_NUMBER)
+                serverSocketAddress =InetSocketAddress(peerAwareInfo.peerIpv6Addr, peerAwareInfo.port)
+
+                Toast.makeText(mainActivity, "Got Server Address\nStarting client socket thread", Toast.LENGTH_LONG).show()
 
                 if(clientSocketThread == null){
                     try{
                         clientSocketThread = ClientSocketThread(serverSocketAddress,this@TestFragment)
-                        clientSocketThread?.also{
-                            it.start()
-                        }
+                        clientSocketThread?.start()
                     } catch(e : Exception){
                         Log.e(">>>>", "clientSocket : ${e.message}")
                     }
                 }
-                Toast.makeText(mainActivity, "Got Server Address", Toast.LENGTH_LONG).show()
             }
             override fun onLost(network: Network) {
                 super.onLost(network)
                 Log.i(">>>>", "NetworkCallback onLost")
-                removeCurrentSocketConnection()
+                // 필요 없을 듯 removeCurrentSocketConnection()
+                mainActivity.runOnUiThread{
+                    testViewModel.setSocketConnected(false)
+                }
             }
         }
         connectivityManager.requestNetwork(myNetworkRequest,
@@ -326,8 +340,22 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     override fun onThreadTerminated() {
         Log.i(">>>>", "from thread : terminating")
         mainActivity.runOnUiThread {
-            Toast.makeText(mainActivity, " 상대방이 게임을 나갔습니다 ", Toast.LENGTH_LONG).show()
             testViewModel.setSocketConnected(false)
+            SimpleConfirmDialog(mainActivity, "알림",
+                "Connection Lost, Return to Home").showDialog()
+
+            homeFragment?.let { fragment ->
+                fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
+            }
+        }
+
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        networkCallback?.let{
+            Log.i(">>>>", "unregistering network Callback")
+            connectivityManager.unregisterNetworkCallback(it)
         }
     }
 

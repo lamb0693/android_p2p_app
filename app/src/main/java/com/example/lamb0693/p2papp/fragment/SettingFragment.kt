@@ -12,7 +12,8 @@ import android.widget.EditText
 import android.widget.RadioButton
 import com.example.lamb0693.p2papp.MainActivity
 import com.example.lamb0693.p2papp.R
-import com.example.lamb0693.p2papp.interfaces.FragmentTransactionHandler
+import com.example.lamb0693.p2papp.SimpleConfirmDialog
+import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import java.lang.Exception
 
 // TODO: Rename parameter arguments, choose names that match
@@ -76,7 +77,7 @@ class SettingFragment : Fragment() {
         buttonConnectSession?.setOnClickListener{
             val roomName : String
             thisView?.findViewById<EditText>(R.id.editRoomName).also{editText->
-                roomName = editText?.text.toString()
+                roomName = editText?.text.toString().trim()
             }
             fragmentTransactionHandler?.onConnectSessionButtonClicked(roomName)
         }

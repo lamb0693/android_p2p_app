@@ -1,4 +1,4 @@
-package com.example.lamb0693.p2papp.interfaces
+package com.example.lamb0693.p2papp.fragment.interfaces
 
 import androidx.fragment.app.Fragment
 

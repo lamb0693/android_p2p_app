@@ -1,4 +1,4 @@
-package com.example.lamb0693.p2papp
+package com.example.lamb0693.p2papp.viewmodel
 
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
