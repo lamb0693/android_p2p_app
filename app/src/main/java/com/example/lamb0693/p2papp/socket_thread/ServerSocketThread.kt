@@ -16,8 +16,9 @@ import kotlin.properties.Delegates
 
 open class ServerSocketThread(
     private val messageCallback: ThreadMessageCallback,
-    private val timerInterval : Long // timer가 0이면 수동
 ) : Thread(){
+    open var timerInterval : Long = 0L // timer가 0이면 수동
+
     private var serverSocket : ServerSocket? = null
     private var connectedSocket : Socket? = null
 
@@ -46,12 +47,20 @@ open class ServerSocketThread(
                     sendMessageToClientViaSocket("Hello.. from Server")
 
                     // 자동 갱신이면
-                    if(timerInterval > 0)
+                    if(timerInterval > 0) {
                         CoroutineScope(Dispatchers.IO).launch {
-                        while (isRunning) {
-                            proceedGame()
-                            sendGameDataToFragments()
-                            delay(timerInterval)
+                            while (isRunning) {
+                                proceedGame()
+                                sendGameDataToFragments()
+                                delay(timerInterval)
+                            }
+                        }
+                    } else {
+                        CoroutineScope(Dispatchers.IO).launch {
+                            while (isRunning) {
+                                sendMessageToClientViaSocket("HEARTBEAT")
+                                delay(Constant.HEART_BEAT_INTERVAL)
+                            }
                         }
                     }
 

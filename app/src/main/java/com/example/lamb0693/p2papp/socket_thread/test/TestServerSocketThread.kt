@@ -8,7 +8,9 @@ import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 
 class TestServerSocketThread (
     private val messageCallback: ThreadMessageCallback,
-) : ServerSocketThread(messageCallback, Constant.TEST_TIMER){
+) : ServerSocketThread(messageCallback){
+
+    override var timerInterval : Long = Constant.HEART_BEAT_INTERVAL
     private var gameData = TestGameData(10.0F, 10.0F)
 
     override fun proceedGame() {

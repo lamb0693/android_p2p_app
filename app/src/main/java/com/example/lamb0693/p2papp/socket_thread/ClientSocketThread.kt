@@ -2,6 +2,7 @@ package com.example.lamb0693.p2papp.socket_thread
 
 import android.content.Context
 import android.util.Log
+import com.example.lamb0693.p2papp.Constant
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -42,7 +43,7 @@ open class ClientSocketThread (private val host : InetSocketAddress,
             CoroutineScope(Dispatchers.IO).launch {
                 while (isRunning) {
                     sendMessageToServerViaSocket("HEARTBEAT")
-                    delay(1000L)
+                    delay(Constant.HEART_BEAT_INTERVAL)
                 }
             }
 
