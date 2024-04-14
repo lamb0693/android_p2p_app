@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.InputStream
 import java.io.OutputStream
@@ -37,6 +38,13 @@ open class ClientSocketThread (private val host : InetSocketAddress,
 
             // Send message to the server (group owner)
             sendMessageToServerViaSocket("Hello.. from client")
+
+            CoroutineScope(Dispatchers.IO).launch {
+                while (isRunning) {
+                    sendMessageToServerViaSocket("HEARTBEAT")
+                    delay(1000L)
+                }
+            }
 
             socket?.soTimeout = 100  //inputStream.read에서 block 되는 것을 막아줌
             val buffer = ByteArray(1024)

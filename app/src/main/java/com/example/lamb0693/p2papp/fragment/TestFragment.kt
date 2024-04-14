@@ -23,7 +23,6 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import com.example.lamb0693.p2papp.Constant
 import com.example.lamb0693.p2papp.MainActivity
@@ -200,13 +199,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         Log.i(">>>>", "init serverSocket")
 
-        serverSocketThread = TestServerSocketThread(this@TestFragment, 0L)
+        serverSocketThread = TestServerSocketThread(this@TestFragment)
 
         // WifiAwareNetworkSpecifier 생성
         val networkSpecifier = WifiAwareNetworkSpecifier.Builder(
             mainActivity.publishDiscoverySession!!, mainActivity.currentPeerHandle!!)
             .setPort(serverSocketThread!!.getLocalPort())
-            .setPskPassphrase(Constant.pskParaphrase).build()
+            .setPskPassphrase(Constant.PSK_PARAPHRASE).build()
 
         // WifiAware 를 이용 하는 NetworkRequest 생성
         val myNetworkRequest = NetworkRequest.Builder()
@@ -263,7 +262,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         val networkSpecifier = WifiAwareNetworkSpecifier.Builder(
             mainActivity.subscribeDiscoverySession!!, mainActivity.currentPeerHandle!!)
-            .setPskPassphrase(Constant.pskParaphrase)
+            .setPskPassphrase(Constant.PSK_PARAPHRASE)
             .build()
 
         Log.i(">>>>", "connecting to server socket $networkSpecifier")

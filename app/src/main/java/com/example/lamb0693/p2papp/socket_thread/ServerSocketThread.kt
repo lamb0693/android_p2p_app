@@ -16,14 +16,14 @@ import kotlin.properties.Delegates
 
 open class ServerSocketThread(
     private val messageCallback: ThreadMessageCallback,
-    private val timer : Long // timer가 0이면 수동
+    private val timerInterval : Long // timer가 0이면 수동
 ) : Thread(){
     private var serverSocket : ServerSocket? = null
     private var connectedSocket : Socket? = null
 
     private var outputStream: OutputStream? = null
     private var inputStream : InputStream? = null
-    open var isRunning = true
+    @Volatile open var isRunning = true
     private  var portNo : Int = -1
 
     init {
@@ -46,12 +46,12 @@ open class ServerSocketThread(
                     sendMessageToClientViaSocket("Hello.. from Server")
 
                     // 자동 갱신이면
-                    if(timer > 0)
+                    if(timerInterval > 0)
                         CoroutineScope(Dispatchers.IO).launch {
                         while (isRunning) {
                             proceedGame()
                             sendGameDataToFragments()
-                            delay(timer)
+                            delay(timerInterval)
                         }
                     }
 
@@ -65,7 +65,7 @@ open class ServerSocketThread(
                                 // Handle the received message
                                 Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
                                 if(receivedMessage.contains("ACTION")){
-                                    processGameDataInServer(receivedMessage, (timer==0L))  //true 이면 수동
+                                    processGameDataInServer(receivedMessage, (timerInterval==0L))  //true 이면 수동
                                 }
                                 else {
                                     messageCallback.onMessageReceivedFromThread(receivedMessage)
@@ -121,7 +121,7 @@ open class ServerSocketThread(
 
     // server 역할의 Fragment 에서 server 에 GameData 전달
     fun onGameDataFromServerFragment(strAction: String) {
-        processGameDataInServer(strAction, (timer==0L))
+        processGameDataInServer(strAction, (timerInterval==0L))
     }
 
     // server 의 Game Data 를 모든 Fragement에 전달
