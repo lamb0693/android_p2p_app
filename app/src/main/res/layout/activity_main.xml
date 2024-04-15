@@ -19,17 +19,19 @@
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
             android:paddingHorizontal="10dp"
-            android:src="@android:drawable/button_onoff_indicator_off"
+            android:src="@drawable/custom_onoff_wifi_off"
             tools:ignore="ContentDescription" />
 
         <TextView
+            android:paddingHorizontal="10dp"
             android:id="@+id/tvConnectedDevice"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:text="TextView"
-            android:textColor="#000000"
-            tools:ignore="HardcodedText" />
+            android:gravity="center"
+            android:text=""
+            android:textSize="20sp"
+            android:textColor="#000000" />
 
         <ImageButton
             android:id="@+id/imageButtonSetting"
@@ -37,8 +39,7 @@
             android:adjustViewBounds="true"
             android:layout_height="match_parent"
             app:srcCompat="@android:drawable/ic_menu_manage"
-            android:contentDescription="setting"
-            tools:ignore="HardcodedText" />
+            android:contentDescription="@string/setting" />
     </LinearLayout>
 
     <FrameLayout
@@ -65,14 +66,13 @@
             android:ems="10"
             android:inputType="text"
             android:text=""
-            tools:ignore="HardcodedText,LabelFor,VisualLintTextFieldSize"
+            tools:ignore="LabelFor,VisualLintTextFieldSize"
             android:autofillHints="message" />
 
         <Button
             android:id="@+id/buttonSendMessage"
             android:layout_width="100dp"
             android:layout_height="match_parent"
-            android:text="Send"
-            tools:ignore="HardcodedText" />
+            android:text="@string/send" />
     </LinearLayout>
 </LinearLayout>

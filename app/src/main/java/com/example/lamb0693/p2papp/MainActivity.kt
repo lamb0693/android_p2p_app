@@ -39,6 +39,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
     private lateinit var viewModel : MainViewModel
 
     private val fragmentManager: FragmentManager = supportFragmentManager
+
     private val homeFragment = HomeFragment.newInstance("va1", "val2")
 
     // wifi aware connection variable
@@ -64,9 +65,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         viewModel.wifiAwareConnected.observe(this){
-            if(it) bindMain.imageConnectStatus.setImageResource(android.R.drawable.button_onoff_indicator_on)
+            if(it) bindMain.imageConnectStatus.setImageResource(R.drawable.custom_onoff_wifi_on)
             else {
-                bindMain.imageConnectStatus.setImageResource(android.R.drawable.button_onoff_indicator_off)
+                bindMain.imageConnectStatus.setImageResource(R.drawable.custom_onoff_wifi_off)
                 // 나중에 상대방 device 이름 으로 대체
                 //bindMain.tvConnectedDevice.text = "connected"
             }
@@ -156,6 +157,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                         }
                         Log.i(">>>>",
                             "onMessageReceived...$peerHandle, $receivedMessage, Setting currentPeerHandle and sending server info")
+                        Toast.makeText(this@MainActivity, "상대방과 연결되었습니다", Toast.LENGTH_LONG).show()
                         sendMessageViaSession("SEND_SERVER_INFO")
                     } else if (receivedMessage.contains("REFUSE_INVITATION")){
                         val testFragment : TestFragment? = getTestFragment()
@@ -164,9 +166,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                         } else {
                             testFragment.cancelInitServerSocket()
                         }
+                    } else {
+                        homeFragment.addTextToChattingArea(receivedMessage, false)
+                        Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                     }
-
-                    Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                 }
                 override fun onSessionTerminated() {
                     Log.i(">>>>", "onSessionTerminated")
@@ -197,7 +200,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                     matchFilter: List<ByteArray>
                 ) {
                     Log.i(">>>>", "onServiceDiscovered... $peerHandle, $serviceSpecificInfo")
-                    Toast.makeText(this@MainActivity, "Connected to server", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "상대방과 연결되었습니다", Toast.LENGTH_LONG).show()
                     val messageToSend = "PEER_HANDLE_IS_SET"
                     currentPeerHandle = peerHandle
                     sendMessageViaSession(messageToSend)
@@ -214,8 +217,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                     Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage")
                     if(receivedMessage.contains("INVITATION")) {
                         showInvitationAlertDialog()
+                    } else if(receivedMessage.contains("SEND_SERVER_INFO")) {
+                        Log.i(">>>>", "Recieved SEND_SERVER_INFO message")
+                    } else {
+                        homeFragment.addTextToChattingArea(receivedMessage, false)
+                        Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                     }
-                    Toast.makeText(this@MainActivity, receivedMessage, Toast.LENGTH_SHORT).show()
                 }
                 override fun onSessionTerminated() {
                     removeCurrentWifiAwareSession()
@@ -242,14 +249,14 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
             return
         }
 
+        homeFragment.addTextToChattingArea("나 : $message", true)
+
         if(asServer!!) {
-            val strToSend = "server : $message"
             publishDiscoverySession!!.sendMessage(
-                currentPeerHandle!!,101, strToSend.toByteArray(Charsets.UTF_8))
+                currentPeerHandle!!,101, message.toByteArray(Charsets.UTF_8))
         } else {
-            val strToSend = "client : $message"
             subscribeDiscoverySession!!.sendMessage(
-                currentPeerHandle!!,101, strToSend.toByteArray(Charsets.UTF_8))
+                currentPeerHandle!!,101, message.toByteArray(Charsets.UTF_8))
         }
 
     }
@@ -295,7 +302,8 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         //fragmentTransaction.addToBackStack(null) // Optional: add transaction to back stack
         fragmentTransaction.commit()
 
-        if(newFragment !is SettingFragment) bindMain.imageButtonSetting.isEnabled = true
+        if(newFragment is HomeFragment) bindMain.imageButtonSetting.isEnabled = true
+        else bindMain.imageButtonSetting.isEnabled = false
     }
 
     override fun onConnectSessionButtonClicked(roomName : String) {
@@ -303,6 +311,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
             SimpleConfirmDialog(this, "알림", "먼저 역할과 방이름을 설정하세요").showDialog()
             return
         }
+
+        if (!roomName.matches("[a-zA-Z][a-zA-Z0-9]*".toRegex())) {
+            SimpleConfirmDialog(this, "알림", "방 이름은 영문자로 시작하고, 영문자와 숫자로만 이루어져야 합니다").showDialog()
+            return
+        }
+
         Log.i(">>>>", "ConnectSession Button is clicked")
         viewModel.setRoomName(roomName)
         attach()
@@ -339,6 +353,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
             Toast.makeText(this, "connect wifi aware network first",
                 Toast.LENGTH_SHORT).show()
         }
+    }
+
+    override fun setEnableButtonSetting(bEnabled: Boolean) {
+        bindMain.imageButtonSetting.isEnabled = bEnabled
     }
 
     private val permissionLauncher = registerForActivityResult(

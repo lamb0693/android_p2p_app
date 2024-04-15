@@ -8,4 +8,8 @@
     <string name="home_screen">Home Screen</string>
     <string name="room_name">Room Name</string>
     <string name="disconnect">Disconnect</string>
+    <string name="home">Home</string>
+    <string name="test_game">Test Game</string>
+    <string name="send">Send</string>
+    <string name="setting">setting</string>
 </resources>

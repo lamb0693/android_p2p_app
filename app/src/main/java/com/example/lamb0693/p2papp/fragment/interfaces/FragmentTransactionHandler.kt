@@ -9,4 +9,5 @@ interface FragmentTransactionHandler {
     fun onAsServerButtonClicked()
     fun onAsClientButtonClicked()
     fun onGame1ButtonClicked()
+    fun setEnableButtonSetting(bEnabled: Boolean)
 }

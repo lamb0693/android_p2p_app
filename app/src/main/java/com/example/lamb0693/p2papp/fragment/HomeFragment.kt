@@ -1,7 +1,11 @@
 package com.example.lamb0693.p2papp.fragment
 
 import android.content.Context
+import android.graphics.Color
 import android.os.Bundle
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.style.ForegroundColorSpan
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -10,6 +14,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.RadioButton
+import android.widget.TextView
 import com.example.lamb0693.p2papp.R
 import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import java.lang.Exception
@@ -31,6 +36,8 @@ class HomeFragment : Fragment() {
 
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
+    protected var thisView : View? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
@@ -44,15 +51,15 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        val view = inflater.inflate(R.layout.fragment_home, container, false)
+        thisView = inflater.inflate(R.layout.fragment_home, container, false)
 
-        val buttonGame1 = view?.findViewById<ImageButton>(R.id.imageButtonGame1)
+        val buttonGame1 = thisView?.findViewById<ImageButton>(R.id.imageButtonGame1)
         if(buttonGame1 == null) Log.e(">>>>", "buttonAsServer null")
         buttonGame1?.setOnClickListener{
             fragmentTransactionHandler?.onGame1ButtonClicked()
         }
 
-        return view
+        return thisView
     }
 
     override fun onAttach(context: Context) {
@@ -63,6 +70,25 @@ class HomeFragment : Fragment() {
         } catch (e : Exception){
             Log.e(">>>>", "onAttach ${e.message}")
         }
+    }
+
+    fun addTextToChattingArea(message: String, fromMainActivity: Boolean) {
+        val tvChatting = thisView?.findViewById<TextView>(R.id.tvChattingArea)
+        if(tvChatting == null) Log.e(">>>>", "tvChatting null")
+
+        val spannable = SpannableString(message)
+
+        // Set the color for the specific part of the text
+        val color = if (fromMainActivity) {
+            Color.BLUE // Change this to the desired color
+        } else {
+            Color.RED // Change this to the desired color
+        }
+        spannable.setSpan(ForegroundColorSpan(color), 0, message.length, Spannable.SPAN_EXCLUSIVE_EXCLUSIVE)
+
+        // Append the SpannableString to the TextView
+        tvChatting?.append("\n")
+        tvChatting?.append(spannable)
     }
 
     companion object {

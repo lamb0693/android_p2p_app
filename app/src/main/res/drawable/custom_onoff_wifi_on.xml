@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="60dp"
+    android:height="60dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Define the path for your drawable -->
+    <path
+        android:fillColor="#0000FF"
+        android:pathData="M12,12 m-10,0a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+</vector>

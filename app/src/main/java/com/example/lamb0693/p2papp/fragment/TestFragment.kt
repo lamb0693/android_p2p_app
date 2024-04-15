@@ -113,8 +113,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         testViewModel.socketConnected.observe(viewLifecycleOwner){
             val imageViewSocketConnected = testView.findViewById<ImageView>(R.id.imageSocketConnectStatus)
-            if(it) imageViewSocketConnected.setImageResource(android.R.drawable.button_onoff_indicator_on)
-            else imageViewSocketConnected.setImageResource(android.R.drawable.button_onoff_indicator_off)
+            if(it) imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_on)
+            else imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_off)
         }
 
         val buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
@@ -167,6 +167,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         try {
             fragmentTransactionHandler = context as FragmentTransactionHandler
+            fragmentTransactionHandler?.setEnableButtonSetting(false)
             mainActivity = context as MainActivity
         } catch (e : Exception){
             Log.e(">>>>", "onAttach ${e.message}")
@@ -219,8 +220,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 Log.i(">>>>", "NetworkCallback onAvailable")
-                Toast.makeText(mainActivity, "Socket network available", Toast.LENGTH_LONG).show()
-
+                //Toast.makeText(mainActivity, "Socket network available", Toast.LENGTH_LONG).show()
                 try{
                     serverSocketThread?.start()
                 } catch ( e : Exception){
@@ -287,7 +287,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 val peerAwareInfo = networkCapabilities.transportInfo as WifiAwareNetworkInfo
                 serverSocketAddress =InetSocketAddress(peerAwareInfo.peerIpv6Addr, peerAwareInfo.port)
 
-                Toast.makeText(mainActivity, "Got Server Address\nStarting client socket thread", Toast.LENGTH_LONG).show()
+                //Toast.makeText(mainActivity, "Got Server Address\nStarting client socket thread", Toast.LENGTH_LONG).show()
 
                 if(clientSocketThread == null){
                     try{
@@ -388,6 +388,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     override fun onConnectionMade() {
         mainActivity.runOnUiThread{
             testViewModel.setSocketConnected(true)
+            Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_LONG).show()
         }
     }
 }

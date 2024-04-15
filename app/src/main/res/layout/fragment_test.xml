@@ -7,6 +7,7 @@
     tools:context=".fragment.TestFragment" >
 
     <LinearLayout
+        android:background="#cccccc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
@@ -17,7 +18,7 @@
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
             android:paddingHorizontal="10dp"
-            android:src="@android:drawable/button_onoff_indicator_off"
+            android:src="@drawable/custom_socket_connection_off"
             tools:ignore="ContentDescription" />
 
         <TextView
@@ -26,13 +27,13 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="17sp"
-            android:text="TextView" />
+            android:text="@string/test_game" />
 
         <Button
             android:id="@+id/buttonToHomeFromTest"
-            android:layout_width="100dp"
+            android:layout_width="130dp"
             android:layout_height="wrap_content"
-            android:text="Home" />
+            android:text="@string/home" />
     </LinearLayout>
 
     <view class="com.example.lamb0693.p2papp.fragment.TestFragment$TestGameView"

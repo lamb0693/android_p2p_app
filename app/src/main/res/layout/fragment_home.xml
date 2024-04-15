@@ -19,13 +19,20 @@
         android:layout_height="100dp"
         android:src="@android:drawable/button_onoff_indicator_off" />
 
+    <ImageButton
+        android:id="@+id/imageButtonGame3"
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:src="@android:drawable/button_onoff_indicator_off" />
+
     <TextView
-        android:id="@+id/textView2"
+        android:id="@+id/tvChattingArea"
+        android:textSize="18sp"
         android:layout_marginHorizontal="5dp"
         android:layout_marginVertical="10dp"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
         android:background="@color/cardview_light_background"
-        android:text="TextView" />
+        android:text="" />
 </LinearLayout>

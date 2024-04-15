@@ -47,11 +47,12 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:paddingHorizontal="10dp"
             android:autofillHints="room name"
             android:ems="10"
             android:inputType="text"
             android:text=""
-            android:textSize="20sp"
+            android:textSize="18sp"
             tools:ignore="LabelFor,SpeakableTextPresentCheck,VisualLintTextFieldSize" />
     </LinearLayout>
 
