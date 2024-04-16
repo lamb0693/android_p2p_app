@@ -10,7 +10,7 @@ class TestServerSocketThread (
     private val messageCallback: ThreadMessageCallback,
 ) : ServerSocketThread(messageCallback){
 
-    override var timerInterval : Long = Constant.TEST_GAME_INTERVAL
+    override var timerInterval : Long = TestGameCons.TEST_GAME_INTERVAL
     private var gameData = TestGameData()
 
     override fun proceedGame() {
@@ -19,6 +19,18 @@ class TestServerSocketThread (
         // 게임 진행
         gameData.ballX += gameData.ballMoveX
         gameData.ballY += gameData.ballMoveY
+
+        // Check if the ball reaches the left or right edge of the view
+        if (gameData.ballX <= 0 || gameData.ballX >= TestGameCons.BITMAP_WIDTH) {
+            // Reverse the horizontal movement
+            gameData.ballMoveX = -gameData.ballMoveX
+        }
+
+        // Check if the ball reaches the top or bottom edge of the view
+        if (gameData.ballY <= 0 || gameData.ballY >= TestGameCons.BITMAP_HEIGHT) {
+            // Reverse the vertical movement
+            gameData.ballMoveY = -gameData.ballMoveY
+        }
     }
 
     override fun processGameDataInServer(strAction : String, manualRedraw : Boolean) {

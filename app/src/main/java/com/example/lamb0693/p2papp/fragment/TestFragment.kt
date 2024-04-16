@@ -35,6 +35,7 @@ import com.example.lamb0693.p2papp.viewmodel.TestViewModel
 import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
+import com.example.lamb0693.p2papp.socket_thread.test.TestGameCons
 import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
 import com.example.lamb0693.p2papp.socket_thread.test.TestServerSocketThread
 import com.example.lamb0693.p2papp.viewmodel.GameState
@@ -94,15 +95,10 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         private val paint: Paint = Paint()
 
-        private lateinit var backgroundBitmap: Bitmap
+        private var backgroundBitmap : Bitmap
         private lateinit var offscreenBitmap: Bitmap
         private lateinit var offscreenCanvas: Canvas
         private lateinit var offscreenBitmapRect : Rect
-        companion object{
-            private const val BITMAP_WIDTH = 400
-            private const val BITMAP_HEIGHT = 600
-            private const val WALL_THICKNESS = 5
-        }
 
         private var scaleX: Float = 1.0f
         private var scaleY: Float = 1.0f
@@ -121,12 +117,12 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             super.onSizeChanged(w, h, oldw, oldh)
 
             // Calculate scaling factors to adjust bitmap size based on device screen size
-            scaleX = w.toFloat() / BITMAP_WIDTH // DESIRED_WIDTH is the width you want your game graphics to be
-            scaleY = h.toFloat() / BITMAP_HEIGHT // DESIRED_HEIGHT is the height you want your game graphics to be
+            scaleX = w.toFloat() / TestGameCons.BITMAP_WIDTH // DESIRED_WIDTH is the width you want your game graphics to be
+            scaleY = h.toFloat() / TestGameCons.BITMAP_HEIGHT // DESIRED_HEIGHT is the height you want your game graphics to be
 
             // Determine the scaled bitmap dimensions
-            val scaledWidth = (BITMAP_WIDTH * scaleX).toInt()
-            val scaledHeight = (BITMAP_HEIGHT * scaleY).toInt()
+            val scaledWidth = (TestGameCons.BITMAP_WIDTH * scaleX).toInt()
+            val scaledHeight = (TestGameCons.BITMAP_HEIGHT * scaleY).toInt()
 
             // Initialize the offscreen bitmap and canvas with scaled dimensions
             offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
@@ -138,20 +134,20 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             canvas.drawBitmap(backgroundBitmap, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null)
             // Draw whatever you want here for your game view
             // Make sure to scale your graphics based on the scaleX and scaleY factors
-            val scaledServerX = (gameData.serverX - gameData.barWidth/2) * scaleX
-            val scaledServerY = (gameData.serverY - gameData.barHeight/2) * scaleY
-            val scaledClientX = (gameData.clientX - gameData.barWidth/2) * scaleX
-            val scaledClientY = (gameData.clientY - gameData.barHeight/2) * scaleY
+            val scaledServerX = (gameData.serverX - TestGameCons.barWidth/2) * scaleX
+            val scaledServerY = (gameData.serverY - TestGameCons.barHeight/2) * scaleY
+            val scaledClientX = (gameData.clientX - TestGameCons.barWidth/2) * scaleX
+            val scaledClientY = (gameData.clientY - TestGameCons.barHeight/2) * scaleY
             val scaledBallX = gameData.ballX * scaleX
             val scaledBallY = gameData.ballY * scaleY
             val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
 
             paint.color = Color.BLUE
             canvas.drawRect(scaledServerX, scaledServerY,
-                scaledServerX + gameData.barWidth * scaleX, scaledServerY + gameData.barHeight * scaleY, paint)
+                scaledServerX + TestGameCons.barWidth * scaleX, scaledServerY + TestGameCons.barHeight * scaleY, paint)
             paint.color = Color.RED
             canvas.drawRect(scaledClientX, scaledClientY,
-                scaledClientX + gameData.barWidth * scaleX, scaledClientY + gameData.barHeight * scaleY, paint)
+                scaledClientX + TestGameCons.barWidth * scaleX, scaledClientY + TestGameCons.barHeight * scaleY, paint)
             paint.color = Color.BLACK
             canvas.drawCircle(scaledBallX, scaledBallY, scaledBallRadius, paint)
         }

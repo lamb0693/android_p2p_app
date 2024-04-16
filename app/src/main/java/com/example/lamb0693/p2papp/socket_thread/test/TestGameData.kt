@@ -5,8 +5,6 @@ import com.google.gson.Gson
 class TestGameData() {
     var serverX : Float = 200.0f
     var clientX : Float = 200.0f
-    val barWidth : Float = 80.0F
-    val barHeight : Float = 10.0F
 
     val serverY : Float = 580f
     val clientY : Float = 20f
