@@ -1,9 +1,13 @@
 package com.example.lamb0693.p2papp.fragment
 
 import android.content.Context
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.Rect
+import android.graphics.RectF
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
@@ -90,22 +94,75 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         private val paint: Paint = Paint()
 
+        private lateinit var backgroundBitmap: Bitmap
+        private lateinit var offscreenBitmap: Bitmap
+        private lateinit var offscreenCanvas: Canvas
+        private lateinit var offscreenBitmapRect : Rect
+        companion object{
+            private const val BITMAP_WIDTH = 400
+            private const val BITMAP_HEIGHT = 600
+            private const val WALL_THICKNESS = 5
+        }
+
+        private var scaleX: Float = 1.0f
+        private var scaleY: Float = 1.0f
+
         var gameData = TestGameData()
 
         init {
             paint.color = Color.BLUE // Change color as needed
             paint.style = Paint.Style.FILL
+
+            //400X600 image
+            backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.background)
+        }
+
+        override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+            super.onSizeChanged(w, h, oldw, oldh)
+
+            // Calculate scaling factors to adjust bitmap size based on device screen size
+            scaleX = w.toFloat() / BITMAP_WIDTH // DESIRED_WIDTH is the width you want your game graphics to be
+            scaleY = h.toFloat() / BITMAP_HEIGHT // DESIRED_HEIGHT is the height you want your game graphics to be
+
+            // Determine the scaled bitmap dimensions
+            val scaledWidth = (BITMAP_WIDTH * scaleX).toInt()
+            val scaledHeight = (BITMAP_HEIGHT * scaleY).toInt()
+
+            // Initialize the offscreen bitmap and canvas with scaled dimensions
+            offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
+            offscreenBitmapRect = Rect(0, 0, offscreenBitmap.width, offscreenBitmap.height )
+            offscreenCanvas = Canvas(offscreenBitmap)
+        }
+
+        private fun drawGame(canvas : Canvas){
+            canvas.drawBitmap(backgroundBitmap, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null)
+            // Draw whatever you want here for your game view
+            // Make sure to scale your graphics based on the scaleX and scaleY factors
+            val scaledServerX = (gameData.serverX - gameData.barWidth/2) * scaleX
+            val scaledServerY = (gameData.serverY - gameData.barHeight/2) * scaleY
+            val scaledClientX = (gameData.clientX - gameData.barWidth/2) * scaleX
+            val scaledClientY = (gameData.clientY - gameData.barHeight/2) * scaleY
+            val scaledBallX = gameData.ballX * scaleX
+            val scaledBallY = gameData.ballY * scaleY
+            val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
+
+            paint.color = Color.BLUE
+            canvas.drawRect(scaledServerX, scaledServerY,
+                scaledServerX + gameData.barWidth * scaleX, scaledServerY + gameData.barHeight * scaleY, paint)
+            paint.color = Color.RED
+            canvas.drawRect(scaledClientX, scaledClientY,
+                scaledClientX + gameData.barWidth * scaleX, scaledClientY + gameData.barHeight * scaleY, paint)
+            paint.color = Color.BLACK
+            canvas.drawCircle(scaledBallX, scaledBallY, scaledBallRadius, paint)
         }
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
-            // Draw whatever you want here for your game view
-            paint.color = Color.BLUE
-            canvas.drawRect(gameData.serverX, gameData.serverY, gameData.serverX+200F, gameData.serverY+100F, paint)
-            paint.color = Color.RED
-            canvas.drawRect(gameData.clientX, gameData.clientY, gameData.clientX+200F, gameData.clientY+100F, paint)
-            paint.color = Color.BLACK
-            canvas.drawCircle(gameData.ballX, gameData.ballY, gameData.ballRadius, paint)
+
+            offscreenCanvas.drawColor(Color.WHITE) // Clear the offscreen canvas
+            drawGame(offscreenCanvas)
+
+            canvas.drawBitmap(offscreenBitmap, null, offscreenBitmapRect, null)
         }
     }
 
@@ -518,5 +575,4 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 }
             }
     }
-
 }

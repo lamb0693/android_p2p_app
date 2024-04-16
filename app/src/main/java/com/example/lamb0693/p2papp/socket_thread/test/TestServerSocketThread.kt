@@ -10,7 +10,7 @@ class TestServerSocketThread (
     private val messageCallback: ThreadMessageCallback,
 ) : ServerSocketThread(messageCallback){
 
-    override var timerInterval : Long = Constant.HEART_BEAT_INTERVAL
+    override var timerInterval : Long = Constant.TEST_GAME_INTERVAL
     private var gameData = TestGameData()
 
     override fun proceedGame() {

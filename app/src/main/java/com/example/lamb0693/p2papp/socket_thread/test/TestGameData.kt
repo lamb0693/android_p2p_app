@@ -3,11 +3,13 @@ package com.example.lamb0693.p2papp.socket_thread.test
 import com.google.gson.Gson
 
 class TestGameData() {
-    var serverX : Float = 0.0f
-    var clientX : Float = 0.0f
+    var serverX : Float = 200.0f
+    var clientX : Float = 200.0f
+    val barWidth : Float = 80.0F
+    val barHeight : Float = 10.0F
 
-    val serverY : Float = 800f
-    val clientY : Float = 10f
+    val serverY : Float = 580f
+    val clientY : Float = 20f
 
     var ballX : Float = 100.0F
     var ballY : Float = 100.0F
