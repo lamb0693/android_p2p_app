@@ -28,7 +28,7 @@ private const val ARG_PARAM2 = "param2"
  */
 class SettingFragment : Fragment() {
     // TODO: Rename and change types of parameters
-    private var param1: String? = null
+    private var isAlreadyConnected: String? = null
     private var param2: String? = null
     private var thisView : View? = null
     private var homeFragment: HomeFragment? = null
@@ -37,7 +37,7 @@ class SettingFragment : Fragment() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
+            isAlreadyConnected = it.getString(ARG_PARAM1)
             param2 = it.getString(ARG_PARAM2)
         }
     }
@@ -63,6 +63,7 @@ class SettingFragment : Fragment() {
     }
 
     private fun initializeButton(){
+        // 홈으로 돌아가기 버튼
         val buttonSettingCompleted = thisView?.findViewById<Button>(R.id.buttonSettingCompleted)
         if(buttonSettingCompleted == null) Log.e(">>>>", "buttonSettingCompleted null")
         buttonSettingCompleted?.setOnClickListener{
@@ -71,9 +72,10 @@ class SettingFragment : Fragment() {
             }
         }
 
+        // WifiAware session 연결 버튼
         val buttonConnectSession = thisView?.findViewById<Button>(R.id.buttonConnectSession)
         if(buttonConnectSession == null) Log.e(">>>>", "buttonConnectSession null")
-        buttonConnectSession?.isEnabled = ( param1!!.contains("false") )
+        buttonConnectSession?.isEnabled = ( isAlreadyConnected!!.contains("false") )
         buttonConnectSession?.setOnClickListener{
             val roomName : String
             thisView?.findViewById<EditText>(R.id.editRoomName).also{editText->
@@ -82,19 +84,22 @@ class SettingFragment : Fragment() {
             fragmentTransactionHandler?.onConnectSessionButtonClicked(roomName)
         }
 
+        // WifiAware 연결 해제 버튼
         val buttonDisconnectSession = thisView?.findViewById<Button>(R.id.buttonDisconnectSession)
         if(buttonDisconnectSession == null) Log.e(">>>>", "buttonConnectSession null")
-        buttonDisconnectSession?.isEnabled = ( param1!!.contains("true") )
+        buttonDisconnectSession?.isEnabled = ( isAlreadyConnected!!.contains("true") )
         buttonDisconnectSession?.setOnClickListener{
             fragmentTransactionHandler?.onDisconnectSessionButtonClicked()
         }
 
+        // 서버 역할 선택
         val buttonAsServer = thisView?.findViewById<RadioButton>(R.id.rbServer)
         if(buttonAsServer == null) Log.e(">>>>", "buttonAsServer null")
         buttonAsServer?.setOnClickListener{
             fragmentTransactionHandler?.onAsServerButtonClicked()
         }
 
+        // client 역할 선택
         val buttonAsClient = thisView?.findViewById<RadioButton>(R.id.rbClient)
         if(buttonAsClient == null) Log.e(">>>>", "buttonAsClient null")
         buttonAsClient?.setOnClickListener{

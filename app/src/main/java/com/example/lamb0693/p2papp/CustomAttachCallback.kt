@@ -15,7 +15,6 @@ class CustomAttachCallback (private val activity: MainActivity) : AttachCallback
         Log.i(">>>>", "onAttached")
         session?.let{
             Log.i(">>>>", "onAttached session : $it")
-            // activity.removeCurrentWifiAwareSession() //setWifiAwareSession내에서
             activity.setWifiAwareSession(it)
         }
     }

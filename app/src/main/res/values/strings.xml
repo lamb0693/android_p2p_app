@@ -15,4 +15,7 @@
     <string name="start">Start</string>
     <string name="pause">PAUSE</string>
     <string name="restart">Restart</string>
+    <string name="notification">Notification</string>
+    <string name="condtion_open_room">You must be server to make room</string>
+    <string name="wifiaware_first">Connect Wifi Network first</string>
 </resources>

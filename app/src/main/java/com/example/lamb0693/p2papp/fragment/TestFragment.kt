@@ -1,6 +1,5 @@
 package com.example.lamb0693.p2papp.fragment
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
@@ -52,12 +51,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     private var param1: String? = null
     private var param2: String? = null
 
+    // socketConnected와, GameStatus를 위한 ViewModel
     private lateinit var testViewModel : TestViewModel
 
+    //Fragment를 Activity에 전달하기 위한 View
     private lateinit var testView : View
+
+    // homeFragment는 항상 Activity에 남아 있음
     private var homeFragment: HomeFragment? = null
+    // MainActiviy의 함수 실행용
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
+    // Game 화면을 그리기 위한 View
     private lateinit var testGameView: TestGameView
 
     private var buttonStart : Button?= null
@@ -66,6 +71,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     lateinit var mainActivity : MainActivity
 
     private lateinit var connectivityManager : ConnectivityManager
+
     //socketThread
     private lateinit var serverSocketAddress : InetSocketAddress
     private var serverSocketThread : TestServerSocketThread? =  null
@@ -73,6 +79,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     private var networkCallback : ConnectivityManager.NetworkCallback? =null
 
+    /***********************************
+     * TestGameView
+     **********************************/
     class TestGameView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
@@ -100,31 +109,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
-    }
-
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
-                              savedInstanceState: Bundle?): View? {
-
-        // Inflate the layout for this fragment
-        testView = inflater.inflate(R.layout.fragment_test, container, false)
-        testGameView = testView.findViewById(R.id.viewTestGame)
-
-        connectivityManager = mainActivity.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-
-        initViewModel()
-        initButtonAndListener()
-
-        return testView
-    }
-
-
+    /***********************************
+     * TestFragment
+     **********************************/
     private fun initViewModel() {
         testViewModel = ViewModelProvider(this)[TestViewModel::class.java]
 
@@ -143,7 +130,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             }
         }
     }
-    private fun initButtonAndListener(){
+    private fun initTestViewButtonAndListener(){
         buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
 
@@ -178,19 +165,46 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.TIRAMISU)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        arguments?.let {
+            param1 = it.getString(ARG_PARAM1)
+            param2 = it.getString(ARG_PARAM2)
+        }
+    }
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?,
+                              savedInstanceState: Bundle?): View? {
+
+        // Inflate the layout for this fragment
+        testView = inflater.inflate(R.layout.fragment_test, container, false)
+        testGameView = testView.findViewById(R.id.viewTestGame)
+
+        connectivityManager = mainActivity.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
+
+        initViewModel()
+        initTestViewButtonAndListener()
+
+        return testView
+    }
+
     @RequiresApi(Build.VERSION_CODES.Q)
-    @SuppressLint("ClickableViewAccessibility")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        // asServer -> initServerSocket else connectToServerSocket
         if(mainActivity.asServer!!) {
             initServerSocket()  // accept()에서 block됨
             mainActivity.sendMessageViaSession("INVITATION")
-
-
         }
         else connectToServerSocket()
 
+        // Game Control용 Listerner
+        initGameInterfaceListener()
+    }
+
+    private fun initGameInterfaceListener() {
         testGameView.setOnClickListener{
             if(mainActivity.asServer!!){
                 serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
@@ -207,16 +221,26 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         homeFragment = fragment
     }
 
+    // Attach 될때 MainActivity관련 변수 설정
     override fun onAttach(context: Context) {
         super.onAttach(context)
 
         try {
             fragmentTransactionHandler = context as FragmentTransactionHandler
-            fragmentTransactionHandler?.setEnableButtonSetting(false)
+            fragmentTransactionHandler?.onEnableButtonSetting(false)
             mainActivity = context as MainActivity
         } catch (e : Exception){
             Log.e(">>>>", "onAttach ${e.message}")
             throw RuntimeException("$context must implement FragmentTransactionHandler and MainActivity")
+        }
+    }
+
+    // Detach()될때 NetworkCallback 을 꼭 제거해야 됨 - 아니면 다음에 다른 callback이 안 붙음
+    override fun onDetach() {
+        super.onDetach()
+        networkCallback?.let{
+            Log.i(">>>>", "unregistering network Callback")
+            connectivityManager.unregisterNetworkCallback(it)
         }
     }
 
@@ -230,7 +254,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             Log.e(">>>>", "error to cancelInitServerSocket() : ${e.message}")
         }
     }
-
     @RequiresApi(Build.VERSION_CODES.Q)
     fun initServerSocket(){
         if(mainActivity.asServer == null || mainActivity.asServer==false) {
@@ -290,7 +313,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             connectivityManager.requestNetwork(myNetworkRequest, it)
         }
     }
-
     @RequiresApi(Build.VERSION_CODES.Q)
     fun connectToServerSocket() {
         if(mainActivity.asServer == null || mainActivity.asServer==true){
@@ -357,25 +379,20 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         )
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment TestFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic fun newInstance(param1: String, param2: String) =
-                TestFragment().apply {
-                    arguments = Bundle().apply {
-                        putString(ARG_PARAM1, param1)
-                        putString(ARG_PARAM2, param2)
-                    }
-                }
+    /**********************************]
+     * 기본적인 ThreadMessageCallback overload
+     * Thread에서 실행 시킴 : runOnUiThread 필요
+     ***********************************/
+    override fun onConnectionMade() {
+        mainActivity.runOnUiThread{
+            testViewModel.setSocketConnected(true)
+            Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_LONG).show()
+            buttonStart?.isEnabled = true
+        }
     }
-
+    override fun onThreadStarted() {
+        Log.i(">>>>", "from thread : started")
+    }
     override fun onThreadTerminated() {
         Log.i(">>>>", "from thread : terminating")
         mainActivity.runOnUiThread {
@@ -389,19 +406,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         }
     }
 
-    override fun onDetach() {
-        super.onDetach()
-        networkCallback?.let{
-            Log.i(">>>>", "unregistering network Callback")
-            connectivityManager.unregisterNetworkCallback(it)
-        }
-    }
 
-    override fun onThreadStarted() {
-        Log.i(">>>>", "from thread : started")
-    }
-
-    //server 는 직접 받고
+    /***************
+     * ThreadMessageCallback overload  : GameStateMessage 처리
+     * onGameStateMessageFromThread :  from server thread server만 해당
+     * onGameStateFromServerViaSocket : from client thread  client만 해당
+     * processGameStateChange
+     */
     override fun onGameStateMessageFromThread(gameState: GameState) {
         if(mainActivity.asServer!!){
             Log.i(">>>>", "received GameState message from server thread")
@@ -440,7 +451,12 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         buttonStart?.isEnabled = true
     }
 
-    // server인 경우에는 직접 받음
+    /***************
+     * ThreadMessageCallback overload : GameData 처리
+     * onGameDataReceivedFromThread :  from server thread server only
+     * onGameDataReceivedFromServerViaSocket : from client thread, client only
+     * processGameData
+     */
     override fun onGameDataReceivedFromThread(gameData: TestGameData) {
         if(mainActivity.asServer!!){
             Log.i(">>>>", "received gameData in TestFragment : $gameData")
@@ -449,8 +465,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             Log.e(">>>>", "onGameDataReceivedFromThread to client")
         }
     }
-
-    // client는 server->client thread에서 전달 되어 온 gameData
     override fun onGameDataReceivedFromServerViaSocket(strGameData: String) {
         if(mainActivity.asServer!!) {
             Log.e(">>>>", "onGameDataReceivedFromServerViaSocket to server")
@@ -464,32 +478,45 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             }
         }
     }
-
-    // from onGameDataReceivedFromThread and onGameDataReceivedFromServerViaSocket
     private fun processGameData(gameData: TestGameData) {
         testGameView.gameData = gameData
         testGameView.invalidate()
     }
 
-    override fun onConnectionMade() {
-        mainActivity.runOnUiThread{
-            testViewModel.setSocketConnected(true)
-            Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_LONG).show()
-            buttonStart?.isEnabled = true
-        }
-    }
-
-
-    // client만 해당
+    /*********************
+     * Other Message From thread  :  client 만 해당
+     * onOtherMessageReceivedFromServerViaSocket : Server 만 해당
+     * onOtherMessageFromClientViaSocket
+     **************************/
     override fun onOtherMessageReceivedFromServerViaSocket(receivedMessage: String) {
         if(mainActivity.asServer!!) return
         if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageReceivedFromServerViaSocket : $receivedMessage")
     }
-
-    // Server 만 해당
     override fun onOtherMessageFromClientViaSocket(receivedMessage: String) {
         if(!mainActivity.asServer!!) return
         if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageFromClientViaSocket : $receivedMessage")
+    }
+
+    /**********************************
+     * newInstance : companion object
+     *********************************/
+    companion object {
+        /**
+         * Use this factory method to create a new instance of
+         * this fragment using the provided parameters.
+         *
+         * @param param1 Parameter 1.
+         * @param param2 Parameter 2.
+         * @return A new instance of fragment TestFragment.
+         */
+        // TODO: Rename and change types and number of parameters
+        @JvmStatic fun newInstance(param1: String, param2: String) =
+            TestFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_PARAM1, param1)
+                    putString(ARG_PARAM2, param2)
+                }
+            }
     }
 
 }

@@ -24,7 +24,7 @@
 
         <TextView
             android:paddingHorizontal="10dp"
-            android:id="@+id/tvConnectedDevice"
+            android:id="@+id/tvRoomName"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

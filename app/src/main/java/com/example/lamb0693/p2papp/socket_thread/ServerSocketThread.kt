@@ -17,6 +17,7 @@ import java.net.SocketTimeoutException
 open class ServerSocketThread(
     private val messageCallback: ThreadMessageCallback,
 ) : Thread(){
+    // timerInterval 은 Extended class에서 값을 재 정이
     open var timerInterval : Long = 0L // timer가 0이면 수동
 
     private var serverSocket : ServerSocket? = null
@@ -119,10 +120,6 @@ open class ServerSocketThread(
         messageCallback.onThreadTerminated()
     }
 
-    open fun proceedGame() {
-        //override function에서 isPaused 체크
-    }
-
     fun getLocalPort() : Int {
         return this.portNo
     }
@@ -174,14 +171,18 @@ open class ServerSocketThread(
         processGameDataInServer(strAction, (timerInterval==0L))
     }
 
+    open fun proceedGame() {
+        //Extended class에서 override 해서 사용
+    }
 
     // server 의 Game Data 를 모든 Fragement에 전달
-    open fun sendGameDataToFragments(){ }
-
+    open fun sendGameDataToFragments(){
+        //Extended class에서 override 해서 사용
+    }
 
     // should Execute super function
     open fun processGameDataInServer(strAction : String, manualRedraw : Boolean) {
-        //override function에서 isPaused 체크
+        //Extended class에서 override 해서 사용
     }
 
 }

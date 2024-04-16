@@ -65,16 +65,17 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         viewModel = ViewModelProvider(this)[MainViewModel::class.java]
 
         viewModel.wifiAwareConnected.observe(this){
-            if(it) bindMain.imageConnectStatus.setImageResource(R.drawable.custom_onoff_wifi_on)
+            if(it) {
+                bindMain.imageConnectStatus.setImageResource(R.drawable.custom_onoff_wifi_on)
+            }
             else {
                 bindMain.imageConnectStatus.setImageResource(R.drawable.custom_onoff_wifi_off)
-                // 나중에 상대방 device 이름 으로 대체
-                //bindMain.tvConnectedDevice.text = "connected"
             }
+            setButtonConnStateOfSettingFragment(it)
         }
 
         viewModel.roomName.observe(this){
-            bindMain.tvConnectedDevice.text = it
+            bindMain.tvRoomName.text = it
         }
     }
 
@@ -94,7 +95,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         }
     }
 
-    private fun initializeMainWithHomeFragment(){
+    private fun setHomeFragmentInMainActivity(){
         val fragmentTransaction: FragmentTransaction = fragmentManager.beginTransaction()
         fragmentTransaction.add(R.id.frameLayoutContainer, homeFragment)
         fragmentTransaction.commit();
@@ -111,7 +112,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         setContentView(bindMain.root)
 
         initViewModel()
-        initializeMainWithHomeFragment()
+        setHomeFragmentInMainActivity()
         initializeButton()
         initSystemService()
         registerWifiAwareReceiver()
@@ -119,6 +120,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         checkPermission()
     }
 
+    // SessionCallback에서 실행 됨
     fun attach(){
         wifiAwareManager.attach(customAttachCallback, null)
     }
@@ -129,7 +131,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         currentWifiAwareSession = wifiAwareSession
 
         Log.i(">>>>", "setting wifiAwareSession")
-        if(currentWifiAwareSession == null) Log.e(">>>>", "wifiAwareSession null")
+        if(currentWifiAwareSession == null) {
+            Log.e(">>>>", "wifiAwareSession null")
+            return
+        }
 
         if(asServer == null || viewModel.roomName.value!!.isEmpty()) {
             Log.e(">>>>", "asServer null or roomName Empty")
@@ -153,7 +158,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                         currentPeerHandle = peerHandle
                         runOnUiThread {
                             viewModel.setWifiAwareConnected(true)
-                            setButtonConnection(true)
                         }
                         Log.i(">>>>",
                             "onMessageReceived...$peerHandle, $receivedMessage, Setting currentPeerHandle and sending server info")
@@ -208,7 +212,6 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                     //connection 된 것으로 처리
                     runOnUiThread {
                         viewModel.setWifiAwareConnected(true)
-                        setButtonConnection(true)
                     }
                 }
                 @RequiresApi(Build.VERSION_CODES.Q)
@@ -227,13 +230,14 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                 override fun onSessionTerminated() {
                     removeCurrentWifiAwareSession()
                     Toast.makeText(this@MainActivity, "session terminated", Toast.LENGTH_SHORT).show()
+                    removeCurrentWifiAwareSession()
                     super.onSessionTerminated()
                 }
                 override fun onServiceLost(peerHandle: PeerHandle, reason: Int) {
                     super.onServiceLost(peerHandle, reason)
                     Log.i(">>>>", "onServiceLost $peerHandle, $reason")
                     Toast.makeText(this@MainActivity, "session service lost", Toast.LENGTH_SHORT).show()
-                    removeCurrentWifiAwareSession()
+                    removeCurrentWifiAwareSession() // UIchange도 함수안에
                 }
             }, null)
         }
@@ -273,12 +277,8 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         } catch (e: Exception) {
             Log.e(">>>>", "removeWifiAwareSession : ${e.message}")
         }
-        // button in SettingFragment
-        runOnUiThread{
-            setButtonConnection(false)
-            viewModel.setWifiAwareConnected(false)
-        }
-    }
+        viewModel.setWifiAwareConnected(false)
+     }
 
     private fun isSocketConnectionPossible() : Boolean {
         if (asServer == null) return false
@@ -322,10 +322,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         attach()
     }
 
+    // UI change도 removeCurrentWifiAwareSession() 안에서
     override fun onDisconnectSessionButtonClicked() {
         removeCurrentWifiAwareSession()
-        viewModel.setWifiAwareConnected(false)
-        viewModel.setRoomName("")
     }
 
     override fun onAsServerButtonClicked() {
@@ -342,7 +341,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
     override fun onGame1ButtonClicked() {
         if(isSocketConnectionPossible()) {
             if(!asServer!!) {
-                SimpleConfirmDialog(this, "알림","방을 생성하려면 서버역할이어야 함").showDialog()
+                SimpleConfirmDialog(this, getString(R.string.notification),getString(R.string.condtion_open_room)).showDialog()
                 return
             }
             TestFragment.newInstance("val1", "val2").apply {
@@ -350,12 +349,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                 onChangeFragment(this, "TestFragment")
             }
         } else {
-            Toast.makeText(this, "connect wifi aware network first",
+            Toast.makeText(this, getString(R.string.wifiaware_first),
                 Toast.LENGTH_SHORT).show()
         }
     }
 
-    override fun setEnableButtonSetting(bEnabled: Boolean) {
+    override fun onEnableButtonSetting(bEnabled: Boolean) {
         bindMain.imageButtonSetting.isEnabled = bEnabled
     }
 
@@ -437,11 +436,11 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         return supportFragmentManager.findFragmentByTag("TestFragment") as? TestFragment
     }
 
-    private fun setButtonConnection(connected : Boolean){
+    // viewModel.observer 에서만 실행
+    private fun setButtonConnStateOfSettingFragment(connected : Boolean){
         val buttonConnect = findViewById<Button>(R.id.buttonConnectSession)
         buttonConnect?.isEnabled = !connected
         val buttonDisconnect = findViewById<Button>(R.id.buttonDisconnectSession)
         buttonDisconnect?.isEnabled = connected
     }
-
 }

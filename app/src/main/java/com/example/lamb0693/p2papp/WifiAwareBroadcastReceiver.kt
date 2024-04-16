@@ -8,6 +8,7 @@ import android.net.wifi.aware.WifiAwareManager
 import android.net.wifi.aware.WifiAwareSession
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 
 class WifiAwareBroadcastReceiver(
@@ -22,10 +23,13 @@ class WifiAwareBroadcastReceiver(
             Log.i(">>>>", "wifiAwareManager is available")
             activity.attach()
         } else {
-            wifiAwareSession.let {
+            wifiAwareSession?.let {
                 activity.removeCurrentWifiAwareSession()
             }
             Log.e(">>>>", "wifiAwareManager is not available")
+            activity.runOnUiThread{
+                Toast.makeText(activity, "wifi is not available", Toast.LENGTH_SHORT).show()
+            }
         }
     }
 }

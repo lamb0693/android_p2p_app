@@ -15,4 +15,7 @@
     <string name="start">시작</string>
     <string name="pause">중지</string>
     <string name="restart">재시작</string>
+    <string name="notification">알림</string>
+    <string name="condtion_open_room">게임을 만드려면 방장이어야 합니다</string>
+    <string name="wifiaware_first">먼저 와이파이 연결을 만드세요</string>
 </resources>
