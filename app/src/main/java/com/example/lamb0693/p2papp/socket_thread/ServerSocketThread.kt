@@ -2,6 +2,7 @@ package com.example.lamb0693.p2papp.socket_thread
 
 import android.util.Log
 import com.example.lamb0693.p2papp.Constant
+import com.example.lamb0693.p2papp.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -11,7 +12,6 @@ import java.io.OutputStream
 import java.net.ServerSocket
 import java.net.Socket
 import java.net.SocketTimeoutException
-import kotlin.properties.Delegates
 
 
 open class ServerSocketThread(
@@ -24,8 +24,13 @@ open class ServerSocketThread(
 
     private var outputStream: OutputStream? = null
     private var inputStream : InputStream? = null
+
+    @Volatile open var isPaused = true
     @Volatile open var isRunning = true
     private  var portNo : Int = -1
+
+    private var isServerPrepared = false
+    private var isClientPrepared = false
 
     init {
         serverSocket = ServerSocket(0)
@@ -75,9 +80,19 @@ open class ServerSocketThread(
                                 Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
                                 if(receivedMessage.contains("ACTION")){
                                     processGameDataInServer(receivedMessage, (timerInterval==0L))  //true 이면 수동
-                                }
-                                else {
-                                    messageCallback.onMessageReceivedFromThread(receivedMessage)
+                                } else if(receivedMessage.contains("CLIENT_PREPARED_GAME")) {
+                                    isClientPrepared = true
+                                    if(isServerPrepared) startGameRoutine()
+                                }else if(receivedMessage.contains("CLIENT_PAUSED_GAME")) {
+                                    isPaused = true
+                                    messageCallback.onGameStateMessageFromThread(GameState.PAUSED)
+                                    sendMessageToClientViaSocket("SERVER_PAUSED_GAME")
+                                } else if(receivedMessage.contains("CLIENT_RESTART_GAME")) {
+                                    isPaused = false
+                                    messageCallback.onGameStateMessageFromThread(GameState.STARTED)
+                                    sendMessageToClientViaSocket("SERVER_RESTARTED_GAME")
+                                }else {
+                                    messageCallback.onOtherMessageFromClientViaSocket(receivedMessage)
                                 }
                             } else {
                                 isRunning = false
@@ -105,7 +120,7 @@ open class ServerSocketThread(
     }
 
     open fun proceedGame() {
-
+        //override function에서 isPaused 체크
     }
 
     fun getLocalPort() : Int {
@@ -124,8 +139,34 @@ open class ServerSocketThread(
         }
     }
 
-    fun onQuitMessageFromFragment() {
+    //fragment에서 직접 실행시킴
+    fun quitServerThread() {
         isRunning = false
+    }
+
+    // framgemnt에서 직접 실행 시킴
+    fun setServerPrepared(){
+        isServerPrepared = true
+        if(isClientPrepared) startGameRoutine()
+    }
+
+    private fun startGameRoutine() {
+        isPaused = false
+        sendMessageToClientViaSocket("SERVER_STARTED_GAME")  // client에는 message로 전달
+        messageCallback.onGameStateMessageFromThread(GameState.STARTED) // server에는 직접 전달
+    }
+
+    // framgemnt에서 직접 실행 시킴
+    fun setPauseGameRoutine(pause : Boolean){
+        isPaused = pause
+        if(isPaused) {
+            sendMessageToClientViaSocket("SERVER_PAUSED_GAME")
+            messageCallback.onGameStateMessageFromThread(GameState.PAUSED)
+        }
+        else {
+            sendMessageToClientViaSocket("SERVER_RESTARTED_GAME")
+            messageCallback.onGameStateMessageFromThread(GameState.STARTED)
+        }
     }
 
     // server 역할의 Fragment 에서 server 에 GameData 전달
@@ -133,12 +174,14 @@ open class ServerSocketThread(
         processGameDataInServer(strAction, (timerInterval==0L))
     }
 
+
     // server 의 Game Data 를 모든 Fragement에 전달
     open fun sendGameDataToFragments(){ }
 
 
     // should Execute super function
     open fun processGameDataInServer(strAction : String, manualRedraw : Boolean) {
+        //override function에서 isPaused 체크
     }
 
 }

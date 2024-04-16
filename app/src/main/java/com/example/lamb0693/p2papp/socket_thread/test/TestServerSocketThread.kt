@@ -11,23 +11,28 @@ class TestServerSocketThread (
 ) : ServerSocketThread(messageCallback){
 
     override var timerInterval : Long = Constant.HEART_BEAT_INTERVAL
-    private var gameData = TestGameData(10.0F, 10.0F)
+    private var gameData = TestGameData()
 
     override fun proceedGame() {
         super.proceedGame()
-        if(gameData.charY< 400) gameData.charY += 5
+        if(isPaused) return
+        // 게임 진행
+        gameData.ballX += gameData.ballMoveX
+        gameData.ballY += gameData.ballMoveY
     }
 
     override fun processGameDataInServer(strAction : String, manualRedraw : Boolean) {
         Log.i(">>>>", "processGameDataInServer() $strAction")
 
+        if(isPaused) return
+
         if(strAction.startsWith("ACTION:")){
             val action = strAction.split(":")[1]
             when(action){
-                "LEFT" -> gameData.charX -= 10
-                "RIGHT" -> gameData.charX += 10
-                "UP" -> gameData.charY -= 10
-                "DOWN" -> gameData.charY +=10
+                "CLIENT_LEFT" -> gameData.clientX -= 10
+                "CLIENT_RIGHT" -> gameData.clientX += 10
+                "SERVER_LEFT" -> gameData.serverX -= 10
+                "SERVER_RIGHT" -> gameData.serverX +=10
             }
             if(manualRedraw) sendGameDataToFragments()
         } else {
@@ -36,6 +41,8 @@ class TestServerSocketThread (
     }
 
     override fun sendGameDataToFragments(){
+        if(isPaused) return
+
         synchronized(this){
             val strToSend = gameData.getStringToSendViaSocket()
             messageCallback.onGameDataReceivedFromThread(gameData)

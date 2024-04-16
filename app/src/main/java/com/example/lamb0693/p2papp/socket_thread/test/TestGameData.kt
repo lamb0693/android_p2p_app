@@ -2,10 +2,19 @@ package com.example.lamb0693.p2papp.socket_thread.test
 
 import com.google.gson.Gson
 
-data class TestGameData(
-    var charX : Float,
-    var charY : Float
-) {
+class TestGameData() {
+    var serverX : Float = 0.0f
+    var clientX : Float = 0.0f
+
+    val serverY : Float = 800f
+    val clientY : Float = 10f
+
+    var ballX : Float = 100.0F
+    var ballY : Float = 100.0F
+    var ballMoveX : Float = 5.0F
+    var ballMoveY : Float = 5.0F
+    val ballRadius : Float = 15.0F
+
     private fun toJson(): String {
         val gson = Gson()
         return gson.toJson(this)

@@ -30,8 +30,14 @@
             android:text="@string/test_game" />
 
         <Button
+            android:id="@+id/buttonStartTestGame"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:text="@string/start" />
+
+        <Button
             android:id="@+id/buttonToHomeFromTest"
-            android:layout_width="130dp"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
             android:text="@string/home" />
     </LinearLayout>

@@ -3,6 +3,7 @@ package com.example.lamb0693.p2papp.socket_thread
 import android.content.Context
 import android.util.Log
 import com.example.lamb0693.p2papp.Constant
+import com.example.lamb0693.p2papp.viewmodel.GameState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -59,8 +60,16 @@ open class ClientSocketThread (private val host : InetSocketAddress,
 
                         if(receivedMessage.startsWith("GAME_DATA")){
                             messageCallback.onGameDataReceivedFromServerViaSocket(receivedMessage)
+                        } else if(receivedMessage.contains("SERVER_STARTED_GAME")){
+                            messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
+                        } else if(receivedMessage.contains("SERVER_PAUSED_GAME")){
+                            messageCallback.onGameStateFromServerViaSocket(GameState.PAUSED)
+                        } else if(receivedMessage.contains("SERVER_RESTARTED_GAME")){
+                            messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
+                        } else if(receivedMessage.contains("SERVER_STOPPED_GAME")){
+                            messageCallback.onGameStateFromServerViaSocket(GameState.STOPPED)
                         } else{
-                            messageCallback.onMessageReceivedFromThread(receivedMessage)
+                            messageCallback.onOtherMessageReceivedFromServerViaSocket(receivedMessage)
                         }
                     } else {
                         isRunning = false

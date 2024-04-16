@@ -11,4 +11,8 @@
     <string name="home">홈 화면</string>
     <string name="test_game">게임 Test</string>
     <string name="send">보내기</string>
+    <string name="setting">연결및 설정</string>
+    <string name="start">시작</string>
+    <string name="pause">중지</string>
+    <string name="restart">재시작</string>
 </resources>

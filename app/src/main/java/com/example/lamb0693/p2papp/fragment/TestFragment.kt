@@ -34,6 +34,7 @@ import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
 import com.example.lamb0693.p2papp.socket_thread.test.TestServerSocketThread
+import com.example.lamb0693.p2papp.viewmodel.GameState
 import java.net.InetSocketAddress
 
 // TODO: Rename parameter arguments, choose names that match
@@ -59,6 +60,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     private lateinit var testGameView: TestGameView
 
+    private var buttonStart : Button?= null
+    private var buttonToHome : Button? = null
+
     lateinit var mainActivity : MainActivity
 
     private lateinit var connectivityManager : ConnectivityManager
@@ -77,7 +81,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         private val paint: Paint = Paint()
 
-        var gameData = TestGameData(10.0F, 10.0F)
+        var gameData = TestGameData()
 
         init {
             paint.color = Color.BLUE // Change color as needed
@@ -87,7 +91,12 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
             // Draw whatever you want here for your game view
-            canvas.drawRect(gameData.charX, gameData.charY, gameData.charX+100F, gameData.charY+100F, paint)
+            paint.color = Color.BLUE
+            canvas.drawRect(gameData.serverX, gameData.serverY, gameData.serverX+200F, gameData.serverY+100F, paint)
+            paint.color = Color.RED
+            canvas.drawRect(gameData.clientX, gameData.clientY, gameData.clientX+200F, gameData.clientY+100F, paint)
+            paint.color = Color.BLACK
+            canvas.drawCircle(gameData.ballX, gameData.ballY, gameData.ballRadius, paint)
         }
     }
 
@@ -109,6 +118,14 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         connectivityManager = mainActivity.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
 
+        initViewModel()
+        initButtonAndListener()
+
+        return testView
+    }
+
+
+    private fun initViewModel() {
         testViewModel = ViewModelProvider(this)[TestViewModel::class.java]
 
         testViewModel.socketConnected.observe(viewLifecycleOwner){
@@ -117,12 +134,27 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             else imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_off)
         }
 
-        val buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
+        testViewModel.gameState.observe(viewLifecycleOwner) {
+            when(it) {
+                GameState.STOPPED -> buttonStart?.text = getString(R.string.start)
+                GameState.STARTED -> buttonStart?.text = getString(R.string.pause)
+                GameState.PAUSED  -> buttonStart?.text = getString(R.string.restart)
+                null -> return@observe
+            }
+        }
+    }
+    private fun initButtonAndListener(){
+        buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
+
+        buttonStart = testView.findViewById<Button>(R.id.buttonStartTestGame)
+        if(buttonStart == null) Log.e(">>>>", "buttonStart null")
+        buttonStart?.isEnabled = false
+
         buttonToHome?.setOnClickListener{
             if(testViewModel.socketConnected.value == true){
-                if(mainActivity.asServer!!) serverSocketThread?.onQuitMessageFromFragment()
-                else(clientSocketThread?.onQuitMessageFromFragment())
+                if(mainActivity.asServer!!) serverSocketThread?.quitServerThread()
+                else clientSocketThread?.onQuitMessageFromFragment()
             } else{
                 homeFragment?.let { fragment ->
                     fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
@@ -130,7 +162,20 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             }
         }
 
-        return testView
+        // button click 하면 sever에 message 보내기만,  ui 처리는 server에서 돌아오면 한다.
+        buttonStart?.setOnClickListener{
+            buttonStart?.isEnabled = false
+            if(testViewModel.gameState.value == GameState.STOPPED) {
+                if(mainActivity.asServer!!) serverSocketThread?.setServerPrepared()
+                else clientSocketThread?.onMessageFromClientToServer("CLIENT_PREPARED_GAME")
+            } else if(testViewModel.gameState.value == GameState.STARTED) {
+                if (mainActivity.asServer!!) serverSocketThread?.setPauseGameRoutine(true)
+                else clientSocketThread?.onMessageFromClientToServer("CLIENT_PAUSED_GAME")
+            } else if(testViewModel.gameState.value == GameState.PAUSED) {
+                if (mainActivity.asServer!!) serverSocketThread?.setPauseGameRoutine(false)
+                else clientSocketThread?.onMessageFromClientToServer("CLIENT_RESTART_GAME")
+            }
+        }
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
@@ -148,9 +193,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         testGameView.setOnClickListener{
             if(mainActivity.asServer!!){
-                serverSocketThread?.onGameDataFromServerFragment("ACTION:LEFT")
+                serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
             }else {
-                clientSocketThread?.onMessageFromClientToServer("ACTION:RIGHT")
+                clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_RIGHT")
             }
         }
     }
@@ -331,11 +376,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 }
     }
 
-    //both serverThread and client thread
-    override fun onMessageReceivedFromThread(message: String) {
-        Log.i(">>>>", "onMessageReceivedFromThread : $message")
-    }
-
     override fun onThreadTerminated() {
         Log.i(">>>>", "from thread : terminating")
         mainActivity.runOnUiThread {
@@ -347,7 +387,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
             }
         }
-
     }
 
     override fun onDetach() {
@@ -362,33 +401,95 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         Log.i(">>>>", "from thread : started")
     }
 
+    //server 는 직접 받고
+    override fun onGameStateMessageFromThread(gameState: GameState) {
+        if(mainActivity.asServer!!){
+            Log.i(">>>>", "received GameState message from server thread")
+            mainActivity.runOnUiThread{
+                processGameStateChange(gameState)
+            }
+
+        }
+    }
+
+    //client는 server -> client thread통해 받고
+    override fun onGameStateFromServerViaSocket(gameState: GameState) {
+        if(!mainActivity.asServer!!){
+            Log.i(">>>>", "received GameState message from client thread")
+            mainActivity.runOnUiThread{
+                processGameStateChange(gameState)
+            }
+        }
+    }
+
+    private fun processGameStateChange(gameState: GameState) {
+        when(gameState){
+            GameState.STARTED-> {
+                Toast.makeText(mainActivity, "game started", Toast.LENGTH_LONG).show()
+                testViewModel.setGameState(GameState.STARTED)
+            }
+            GameState.PAUSED-> {
+                Toast.makeText(mainActivity, "game paused", Toast.LENGTH_LONG).show()
+                testViewModel.setGameState(GameState.PAUSED)
+            }
+            GameState.STOPPED-> {
+                Toast.makeText(mainActivity, "game stopped", Toast.LENGTH_LONG).show()
+                testViewModel.setGameState(GameState.STOPPED)
+            }
+        }
+        buttonStart?.isEnabled = true
+    }
+
     // server인 경우에는 직접 받음
     override fun onGameDataReceivedFromThread(gameData: TestGameData) {
         if(mainActivity.asServer!!){
             Log.i(">>>>", "received gameData in TestFragment : $gameData")
-            testGameView.gameData = gameData
-            testGameView.invalidate()
+            processGameData(gameData)
+        } else {
+            Log.e(">>>>", "onGameDataReceivedFromThread to client")
         }
     }
 
-    // server 로 부터 client 에 전달 되어 온 gameData
+    // client는 server->client thread에서 전달 되어 온 gameData
     override fun onGameDataReceivedFromServerViaSocket(strGameData: String) {
-        if(!mainActivity.asServer!!){
+        if(mainActivity.asServer!!) {
+            Log.e(">>>>", "onGameDataReceivedFromServerViaSocket to server")
+        } else {
             val gameData = TestGameData.fromString(strGameData)
             Log.i(">>>>", "received gameData from server : $gameData")
             if (gameData is TestGameData) {
-                testGameView.gameData = gameData
-                testGameView.invalidate()
+                processGameData(gameData)
             } else {
                 Log.e(">>>>", "onGameDataReceivedFromServerViaSocket,  fail to Convert")
             }
         }
     }
 
+    // from onGameDataReceivedFromThread and onGameDataReceivedFromServerViaSocket
+    private fun processGameData(gameData: TestGameData) {
+        testGameView.gameData = gameData
+        testGameView.invalidate()
+    }
+
     override fun onConnectionMade() {
         mainActivity.runOnUiThread{
             testViewModel.setSocketConnected(true)
             Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_LONG).show()
+            buttonStart?.isEnabled = true
         }
     }
+
+
+    // client만 해당
+    override fun onOtherMessageReceivedFromServerViaSocket(receivedMessage: String) {
+        if(mainActivity.asServer!!) return
+        if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageReceivedFromServerViaSocket : $receivedMessage")
+    }
+
+    // Server 만 해당
+    override fun onOtherMessageFromClientViaSocket(receivedMessage: String) {
+        if(!mainActivity.asServer!!) return
+        if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageFromClientViaSocket : $receivedMessage")
+    }
+
 }
