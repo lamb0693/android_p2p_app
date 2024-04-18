@@ -6,7 +6,7 @@ class TestGameData() {
     var serverX : Float = 200.0f
     var clientX : Float = 200.0f
 
-    val serverY : Float = 580f
+    val serverY : Float = 480f
     val clientY : Float = 20f
 
     var ballX : Float = 100.0F

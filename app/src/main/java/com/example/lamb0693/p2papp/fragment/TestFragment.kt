@@ -1,11 +1,13 @@
 package com.example.lamb0693.p2papp.fragment
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.ConnectivityManager
@@ -20,6 +22,7 @@ import android.util.AttributeSet
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -40,6 +43,8 @@ import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
 import com.example.lamb0693.p2papp.socket_thread.test.TestServerSocketThread
 import com.example.lamb0693.p2papp.viewmodel.GameState
 import java.net.InetSocketAddress
+import java.util.Timer
+import java.util.TimerTask
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -84,6 +89,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     private var networkCallback : ConnectivityManager.NetworkCallback? =null
 
+    // game touch interface
+    //private var isUsingStick = false // Flag to track if the user is using the stick
+    private var startStickX : Float = 0f
+    private var currentPosition = PointF() // Store current position
+    private var touchTimer: Timer? = null
+
+
     /***********************************
      * TestGameView
      **********************************/
@@ -100,6 +112,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         private lateinit var offscreenCanvas: Canvas
         private lateinit var offscreenBitmapRect : Rect
 
+        private var bitmapControllerInactive : Bitmap
+        private var bitmapControllerNeutral : Bitmap
+        private var bitmapControllerLeft : Bitmap
+        private var bitmapControllerRight : Bitmap
+
+
+        var isUsingStick = false
+        var isDraggingRight = false
+        var isDraggingLeft = false
+
+        var scaledControllerRect = RectF()
+
         private var scaleX: Float = 1.0f
         private var scaleY: Float = 1.0f
 
@@ -111,6 +135,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
             //400X600 image
             backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.background)
+            //Controller(not size of 60x60)
+            bitmapControllerInactive = BitmapFactory.decodeResource(resources, R.drawable.neutral_inactive)
+            bitmapControllerNeutral = BitmapFactory.decodeResource(resources, R.drawable.neutral)
+            bitmapControllerLeft = BitmapFactory.decodeResource(resources, R.drawable.left)
+            bitmapControllerRight = BitmapFactory.decodeResource(resources, R.drawable.right)
         }
 
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
@@ -123,6 +152,26 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             // Determine the scaled bitmap dimensions
             val scaledWidth = (TestGameCons.BITMAP_WIDTH * scaleX).toInt()
             val scaledHeight = (TestGameCons.BITMAP_HEIGHT * scaleY).toInt()
+
+            // resize bitmaps of Controller
+            bitmapControllerInactive = Bitmap.createScaledBitmap(bitmapControllerInactive,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerNeutral = Bitmap.createScaledBitmap(bitmapControllerNeutral,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerLeft = Bitmap.createScaledBitmap(bitmapControllerLeft,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerRight = Bitmap.createScaledBitmap(bitmapControllerRight,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+
+            // Determine the scaledControllerRect
+            scaledControllerRect.left = TestGameCons.CONTROLLER_RECT.left * scaleX
+            scaledControllerRect.top = TestGameCons.CONTROLLER_RECT.top * scaleY
+            scaledControllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
+            scaledControllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
 
             // Initialize the offscreen bitmap and canvas with scaled dimensions
             offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
@@ -142,6 +191,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             val scaledBallY = gameData.ballY * scaleY
             val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
 
+            drawController(canvas)
+
             paint.color = Color.BLUE
             canvas.drawRect(scaledServerX, scaledServerY,
                 scaledServerX + TestGameCons.barWidth * scaleX, scaledServerY + TestGameCons.barHeight * scaleY, paint)
@@ -152,6 +203,17 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             canvas.drawCircle(scaledBallX, scaledBallY, scaledBallRadius, paint)
         }
 
+        private fun drawController(canvas : Canvas){
+            if(!isUsingStick) canvas.drawBitmap(bitmapControllerInactive,
+                scaledControllerRect.left, scaledControllerRect.top, paint)
+            else if(!isDraggingRight && !isDraggingLeft) canvas.drawBitmap(
+                bitmapControllerNeutral, scaledControllerRect.left, scaledControllerRect.top, paint)
+            else if(isDraggingRight) canvas.drawBitmap(
+                bitmapControllerRight, scaledControllerRect.left, scaledControllerRect.top, paint)
+            else canvas.drawBitmap(bitmapControllerLeft,
+                scaledControllerRect.left, scaledControllerRect.top, paint)
+        }
+
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
 
@@ -159,6 +221,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             drawGame(offscreenCanvas)
 
             canvas.drawBitmap(offscreenBitmap, null, offscreenBitmapRect, null)
+        }
+
+        // With this code and view.performClick() in touch Listener is needed
+        override fun performClick(): Boolean {
+            super.performClick()
+            // Handle the click action here if needed
+            return true
         }
     }
 
@@ -258,12 +327,69 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     }
 
     private fun initGameInterfaceListener() {
-        testGameView.setOnClickListener{
-            if(mainActivity.asServer!!){
-                serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
-            }else {
-                clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_RIGHT")
+        testGameView.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Check if touch is inside the controller area
+                    if (testGameView.scaledControllerRect.contains(event.x, event.y)) {
+                        testGameView.isUsingStick = true
+                        startStickX = event.x
+                        currentPosition.x = event.x
+                        currentPosition.y = event.y
+                        true // Indicate that touch event is consumed
+                    } else {
+                        false // Indicate that touch event is not consumed
+                    }
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    // Update current position if user is using the stick
+                    if (testGameView.isUsingStick) {
+                        currentPosition.x = event.x
+                        currentPosition.y = event.y
+                    }
+                    true // Indicate that touch event is consumed
+                }
+                MotionEvent.ACTION_UP -> {
+                    testGameView.isUsingStick = false
+                    view.performClick() // Call performClick() on ACTION_UP
+                    true // Indicate that touch event is consumed
+                }
+                else -> false // Return false for other touch event actions
             }
+        }
+    }
+
+    private fun startTouchEventTimer(activate : Boolean) {
+        if (activate) {
+            if (touchTimer == null) {
+                touchTimer = Timer().apply {
+                    scheduleAtFixedRate(object : TimerTask() {
+                        override fun run() {
+                            testGameView.isDraggingRight = currentPosition.x > startStickX + TestGameCons.CONTROLLER_NEUTRAL_WIDTH
+                            testGameView.isDraggingLeft = currentPosition.x < startStickX - TestGameCons.CONTROLLER_NEUTRAL_WIDTH
+
+                            if (!testGameView.isUsingStick) return
+
+                            if (mainActivity.asServer!!) {
+                                if (testGameView.isDraggingRight) {
+                                    serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
+                                } else if (testGameView.isDraggingLeft) {
+                                    serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_LEFT")
+                                }
+                            } else {
+                                if (testGameView.isDraggingRight) {
+                                    clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_RIGHT")
+                                } else if (testGameView.isDraggingLeft) {
+                                    clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_LEFT")
+                                }
+                            }
+                        }
+                    }, 0, TestGameCons.TOUCH_EVENT_INTERVAL)
+                }
+            }
+        } else {
+            touchTimer?.cancel() // Stop the timer if it's running
+            touchTimer = null // Reset the timer instance
         }
     }
 
@@ -465,6 +591,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
      * onGameStateMessageFromThread :  from server thread server만 해당
      * onGameStateFromServerViaSocket : from client thread  client만 해당
      * processGameStateChange
+     * 두 개 다 동일한 code 구현 or processGameStateChange에서 구현
      */
     override fun onGameStateMessageFromThread(gameState: GameState) {
         if(mainActivity.asServer!!){
@@ -472,7 +599,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             mainActivity.runOnUiThread{
                 processGameStateChange(gameState)
             }
-
         }
     }
 
@@ -491,12 +617,15 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             GameState.STARTED-> {
                 Toast.makeText(mainActivity, "game started", Toast.LENGTH_LONG).show()
                 testViewModel.setGameState(GameState.STARTED)
+                startTouchEventTimer(true)
             }
             GameState.PAUSED-> {
+                startTouchEventTimer(false)
                 Toast.makeText(mainActivity, "game paused", Toast.LENGTH_LONG).show()
                 testViewModel.setGameState(GameState.PAUSED)
             }
             GameState.STOPPED-> {
+                startTouchEventTimer(false)
                 Toast.makeText(mainActivity, "game stopped", Toast.LENGTH_LONG).show()
                 testViewModel.setGameState(GameState.STOPPED)
             }
@@ -512,7 +641,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
      */
     override fun onGameDataReceivedFromThread(gameData: TestGameData) {
         if(mainActivity.asServer!!){
-            Log.i(">>>>", "received gameData in TestFragment : $gameData")
+            //Log.i(">>>>", "received gameData in TestFragment : $gameData")
             processGameData(gameData)
         } else {
             Log.e(">>>>", "onGameDataReceivedFromThread to client")
@@ -522,14 +651,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         if(mainActivity.asServer!!) {
             Log.e(">>>>", "onGameDataReceivedFromServerViaSocket to server")
         } else {
-            val gameData = TestGameData.fromString(strGameData)
-            Log.i(">>>>", "received gameData from server : $gameData")
-            if (gameData is TestGameData) {
-                processGameData(gameData)
-            } else {
-                Log.e(">>>>", "onGameDataReceivedFromServerViaSocket,  fail to Convert")
+            try{
+                val gameData = TestGameData.fromString(strGameData)
+                //Log.i(">>>>", "received gameData from server : $gameData")
+                if (gameData is TestGameData) {
+                    processGameData(gameData)
+                } else {
+                    Log.e(">>>>", "onGameDataReceivedFromServerViaSocket,  fail to Convert")
+                }
+            } catch(e : Exception) {
+                Log.e(">>>>", "onGameDataReceivedFromServerViaSocket, ${e.message}")
             }
-        }
+         }
     }
     private fun processGameData(gameData: TestGameData) {
         testGameView.gameData = gameData

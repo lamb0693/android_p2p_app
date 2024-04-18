@@ -27,7 +27,7 @@ class TestServerSocketThread (
         }
 
         // Check if the ball reaches the top or bottom edge of the view
-        if (gameData.ballY <= 0 || gameData.ballY >= TestGameCons.BITMAP_HEIGHT) {
+        if (gameData.ballY <= 0 || gameData.ballY >= 500) {
             // Reverse the vertical movement
             gameData.ballMoveY = -gameData.ballMoveY
         }
@@ -41,10 +41,24 @@ class TestServerSocketThread (
         if(strAction.startsWith("ACTION:")){
             val action = strAction.split(":")[1]
             when(action){
-                "CLIENT_LEFT" -> gameData.clientX -= 10
-                "CLIENT_RIGHT" -> gameData.clientX += 10
-                "SERVER_LEFT" -> gameData.serverX -= 10
-                "SERVER_RIGHT" -> gameData.serverX +=10
+                "CLIENT_LEFT" -> {
+                    gameData.clientX -= 10
+                    if(gameData.clientX < TestGameCons.barWidth/2f) gameData.clientX = TestGameCons.barWidth/2f
+                }
+                "CLIENT_RIGHT" -> {
+                    gameData.clientX += 10
+                    if(gameData.clientX > TestGameCons.BITMAP_WIDTH - TestGameCons.barWidth/2f)
+                        gameData.clientX = TestGameCons.BITMAP_WIDTH- TestGameCons.barWidth/2f
+                    }
+                "SERVER_LEFT" -> {
+                    gameData.serverX -= 10
+                    if(gameData.serverX < TestGameCons.barWidth/2) gameData.serverX = TestGameCons.barWidth/2f
+                }
+                "SERVER_RIGHT" -> {
+                    gameData.serverX +=10
+                    if(gameData.serverX > TestGameCons.BITMAP_WIDTH - TestGameCons.barWidth/2f)
+                        gameData.serverX = TestGameCons.BITMAP_WIDTH - TestGameCons.barWidth/2f
+                }
             }
             if(manualRedraw) sendGameDataToFragments()
         } else {
