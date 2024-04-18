@@ -6,14 +6,25 @@ class TestGameData() {
     var serverX : Float = 200.0f
     var clientX : Float = 200.0f
 
-    val serverY : Float = 480f
-    val clientY : Float = 20f
+    val serverY : Float = 470f
+    val clientY : Float = 30f
 
     var ballX : Float = 100.0F
     var ballY : Float = 100.0F
     var ballMoveX : Float = 5.0F
     var ballMoveY : Float = 5.0F
     val ballRadius : Float = 15.0F
+
+    fun resetData() {
+        serverX = 200.0f
+        clientX = 200.0f
+
+        ballX = 100.0F
+        ballY = 100.0F
+
+        ballMoveX = 5.0F
+        ballMoveY = 5.0F
+    }
 
     private fun toJson(): String {
         val gson = Gson()

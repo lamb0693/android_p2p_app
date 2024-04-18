@@ -21,6 +21,8 @@ interface ThreadMessageCallback {
     fun onGameStateFromServerViaSocket(gameState : GameState)
     fun onGameDataReceivedFromThread(gameData: TestGameData)
     fun onGameDataReceivedFromServerViaSocket(strGameData: String)
+    fun onGameWinnerFromThread(isServerWin: Boolean)
+    fun onGameWinnerFromServerViaSocket(isServerWin: Boolean)
     fun onConnectionMade()
     fun onOtherMessageReceivedFromServerViaSocket(receivedMessage: String)
     fun onOtherMessageFromClientViaSocket(receivedMessage: String)

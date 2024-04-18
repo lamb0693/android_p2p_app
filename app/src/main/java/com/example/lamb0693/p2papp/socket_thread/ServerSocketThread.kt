@@ -79,21 +79,26 @@ open class ServerSocketThread(
                                 val receivedMessage = String(buffer, 0, bytesRead)
                                 // Handle the received message
                                 Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
-                                if(receivedMessage.contains("ACTION")){
+                                if(receivedMessage.startsWith("ACTION")){
                                     processGameDataInServer(receivedMessage, (timerInterval==0L))  //true 이면 수동
-                                } else if(receivedMessage.contains("CLIENT_PREPARED_GAME")) {
-                                    isClientPrepared = true
-                                    if(isServerPrepared) startGameRoutine()
-                                }else if(receivedMessage.contains("CLIENT_PAUSED_GAME")) {
-                                    isPaused = true
-                                    messageCallback.onGameStateMessageFromThread(GameState.PAUSED)
-                                    sendMessageToClientViaSocket("SERVER_PAUSED_GAME")
-                                } else if(receivedMessage.contains("CLIENT_RESTART_GAME")) {
-                                    isPaused = false
-                                    messageCallback.onGameStateMessageFromThread(GameState.STARTED)
-                                    sendMessageToClientViaSocket("SERVER_RESTARTED_GAME")
-                                }else {
-                                    messageCallback.onOtherMessageFromClientViaSocket(receivedMessage)
+                                } else {
+                                    when(receivedMessage) {
+                                        "CLIENT_PREPARED_GAME" -> {
+                                            isClientPrepared = true
+                                            if (isServerPrepared) startGameRoutine()
+                                        }
+                                        "CLIENT_PAUSED_GAME" -> {
+                                            isPaused = true
+                                            messageCallback.onGameStateMessageFromThread(GameState.PAUSED)
+                                            sendMessageToClientViaSocket("SERVER_PAUSED_GAME")
+                                        }
+                                        "CLIENT_RESTART_GAME" -> {
+                                            isPaused = false
+                                            messageCallback.onGameStateMessageFromThread(GameState.STARTED)
+                                            sendMessageToClientViaSocket("SERVER_RESTARTED_GAME")
+                                        }
+                                        else -> messageCallback.onOtherMessageFromClientViaSocket(receivedMessage)
+                                    }
                                 }
                             } else {
                                 isRunning = false
@@ -151,6 +156,8 @@ open class ServerSocketThread(
         isPaused = false
         sendMessageToClientViaSocket("SERVER_STARTED_GAME")  // client에는 message로 전달
         messageCallback.onGameStateMessageFromThread(GameState.STARTED) // server에는 직접 전달
+        isServerPrepared = false
+        isClientPrepared = false
     }
 
     // framgemnt에서 직접 실행 시킴

@@ -60,16 +60,16 @@ open class ClientSocketThread (private val host : InetSocketAddress,
 
                         if(receivedMessage.startsWith("GAME_DATA")){
                             messageCallback.onGameDataReceivedFromServerViaSocket(receivedMessage)
-                        } else if(receivedMessage.contains("SERVER_STARTED_GAME")){
-                            messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
-                        } else if(receivedMessage.contains("SERVER_PAUSED_GAME")){
-                            messageCallback.onGameStateFromServerViaSocket(GameState.PAUSED)
-                        } else if(receivedMessage.contains("SERVER_RESTARTED_GAME")){
-                            messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
-                        } else if(receivedMessage.contains("SERVER_STOPPED_GAME")){
-                            messageCallback.onGameStateFromServerViaSocket(GameState.STOPPED)
-                        } else{
-                            messageCallback.onOtherMessageReceivedFromServerViaSocket(receivedMessage)
+                        } else {
+                            when(receivedMessage) {
+                                "SERVER_STARTED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
+                                "SERVER_PAUSED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.PAUSED)
+                                "SERVER_RESTARTED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
+                                "SERVER_STOPPED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STOPPED)
+                                "SERVER_WIN" -> messageCallback.onGameWinnerFromServerViaSocket(true)
+                                "CLIENT_WIN" -> messageCallback.onGameWinnerFromServerViaSocket(false)
+                                else -> messageCallback.onOtherMessageReceivedFromServerViaSocket(receivedMessage)
+                            }
                         }
                     } else {
                         isRunning = false
