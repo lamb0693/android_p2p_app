@@ -16,9 +16,25 @@ class TestServerSocketThread (
     override var timerInterval : Long = TestGameCons.TEST_GAME_INTERVAL
     private var gameData = TestGameData()
 
+    private var count : Int = 0
+    private val obstacleGenerationInterval = 20
+
     override fun proceedGame() {
         super.proceedGame()
         if(isPaused) return
+
+        count ++
+
+        // obstacle 생성 및 이동
+        if( count%obstacleGenerationInterval == 0) {
+            gameData.obstacles.add(Obstacle())
+        }
+        gameData.obstacles.forEach{
+            it.move()
+        }
+        gameData.obstacles.removeIf {
+            it.curPosX > TestGameCons.BITMAP_WIDTH
+        }
 
         // 게임 진행
         val tempPoint = PointF()

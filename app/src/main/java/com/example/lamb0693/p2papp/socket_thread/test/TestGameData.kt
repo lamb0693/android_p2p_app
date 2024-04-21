@@ -15,6 +15,8 @@ class TestGameData() {
     var ballMoveY : Float = 5.4F
     var ballRadius : Float = 10.0F
 
+    var obstacles =  mutableListOf<Obstacle>()
+
     fun resetData() {
         serverX = 200.0f
         clientX = 200.0f

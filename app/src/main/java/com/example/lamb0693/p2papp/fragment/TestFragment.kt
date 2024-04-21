@@ -119,6 +119,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         private var bitmapServerPaddle : Bitmap
         private var bitmapClientPaddle : Bitmap
 
+        private var bitmapObstacles = arrayOf(
+            BitmapFactory.decodeResource(resources, R.drawable.ball_green),
+            BitmapFactory.decodeResource(resources, R.drawable.ball_brown),
+            BitmapFactory.decodeResource(resources, R.drawable.ball_purple),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_cobalt),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_green),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_cobalt),
+            BitmapFactory.decodeResource(resources, R.drawable.drug_pink),
+            BitmapFactory.decodeResource(resources, R.drawable.drug_purple),
+            BitmapFactory.decodeResource(resources, R.drawable.drug_red)
+        )
+
         var isUsingStick = false
         var isDraggingRight = false
         var isDraggingLeft = false
@@ -144,6 +156,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
             bitmapServerPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_server)
             bitmapClientPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_client)
+
+//            for()
+//            bitmapObstacle1 = BitmapFactory.decodeResource(resources, R.drawable.ball_green)
         }
 
         /*****************************
@@ -208,6 +223,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             val scaledBallX = gameData.ballX * scaleX
             val scaledBallY = gameData.ballY * scaleY
             val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
+
+            // obstacle 그리기
+            gameData.obstacles.forEach{
+                canvas.drawBitmap(bitmapObstacles[it.type], null, it.getScaledRect(scaleX, scaleY), paint )
+            }
 
             canvas.drawBitmap(bitmapServerPaddle, scaledServerBarLeft, scaledServerBarTop, paint)
             canvas.drawBitmap(bitmapClientPaddle, scaledClientBarLeft, scaledClientBarTop, paint)
