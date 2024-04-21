@@ -78,7 +78,7 @@ open class ServerSocketThread(
                             if (bytesRead != null && bytesRead > 0) {
                                 val receivedMessage = String(buffer, 0, bytesRead)
                                 // Handle the received message
-                                Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
+                                //Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
                                 if(receivedMessage.startsWith("ACTION")){
                                     processGameDataInServer(receivedMessage, (timerInterval==0L))  //true 이면 수동
                                 } else {

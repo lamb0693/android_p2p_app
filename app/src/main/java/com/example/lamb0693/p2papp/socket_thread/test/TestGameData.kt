@@ -11,9 +11,9 @@ class TestGameData() {
 
     var ballX : Float = 100.0F
     var ballY : Float = 100.0F
-    var ballMoveX : Float = 5.0F
-    var ballMoveY : Float = 5.0F
-    val ballRadius : Float = 15.0F
+    var ballMoveX : Float = 5.4F
+    var ballMoveY : Float = 5.4F
+    var ballRadius : Float = 10.0F
 
     fun resetData() {
         serverX = 200.0f

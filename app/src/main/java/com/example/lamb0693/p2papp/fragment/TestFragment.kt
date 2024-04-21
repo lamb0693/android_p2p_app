@@ -116,6 +116,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         private var bitmapControllerLeft : Bitmap
         private var bitmapControllerRight : Bitmap
 
+        private var bitmapServerPaddle : Bitmap
+        private var bitmapClientPaddle : Bitmap
 
         var isUsingStick = false
         var isDraggingRight = false
@@ -139,6 +141,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             bitmapControllerNeutral = BitmapFactory.decodeResource(resources, R.drawable.neutral)
             bitmapControllerLeft = BitmapFactory.decodeResource(resources, R.drawable.left)
             bitmapControllerRight = BitmapFactory.decodeResource(resources, R.drawable.right)
+
+            bitmapServerPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_server)
+            bitmapClientPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_client)
         }
 
         /*****************************
@@ -156,6 +161,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             // Determine the scaled bitmap dimensions
             val scaledWidth = (TestGameCons.BITMAP_WIDTH * scaleX).toInt()
             val scaledHeight = (TestGameCons.BITMAP_HEIGHT * scaleY).toInt()
+
+            val scaledPaddleWidth = (TestGameCons.BAR_WIDTH * scaleX).toInt()
+            val scaledPaddleHeight = (TestGameCons.BAR_HEIGHT * scaleX).toInt()
 
             // resize bitmaps of Controller
             bitmapControllerInactive = Bitmap.createScaledBitmap(bitmapControllerInactive,
@@ -177,6 +185,12 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             scaledControllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
             scaledControllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
 
+            // paddle bitmap resize
+            bitmapServerPaddle = Bitmap.createScaledBitmap(bitmapServerPaddle,
+                scaledPaddleWidth, scaledPaddleHeight, true)
+            bitmapClientPaddle = Bitmap.createScaledBitmap(bitmapClientPaddle,
+                scaledPaddleWidth, scaledPaddleHeight, true)
+
             // Initialize the offscreen bitmap and canvas with scaled dimensions
             offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
             offscreenBitmapRect = Rect(0, 0, offscreenBitmap.width, offscreenBitmap.height )
@@ -186,26 +200,21 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         private fun drawGame(canvas : Canvas){
             canvas.drawBitmap(backgroundBitmap, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null)
 
-            // Make sure to scale your graphics based on the scaleX and scaleY factors
-            val scaledServerX = (gameData.serverX - TestGameCons.BAR_WIDTH/2) * scaleX
-            val scaledServerY = (gameData.serverY - TestGameCons.BAR_HEIGHT/2) * scaleY
-            val scaledClientX = (gameData.clientX - TestGameCons.BAR_WIDTH/2) * scaleX
-            val scaledClientY = (gameData.clientY - TestGameCons.BAR_HEIGHT/2) * scaleY
+            // bar 와 ball 그리기
+            val scaledServerBarLeft = (gameData.serverX - TestGameCons.BAR_WIDTH/2f) * scaleX
+            val scaledServerBarTop = (gameData.serverY - TestGameCons.BAR_HEIGHT/2f) * scaleY
+            val scaledClientBarLeft = (gameData.clientX - TestGameCons.BAR_WIDTH/2f) * scaleX
+            val scaledClientBarTop = (gameData.clientY - TestGameCons.BAR_HEIGHT/2f) * scaleY
             val scaledBallX = gameData.ballX * scaleX
             val scaledBallY = gameData.ballY * scaleY
             val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
 
-            drawController(canvas)
-
-            // bar 와 ball 그리기
-            paint.color = Color.BLUE
-            canvas.drawRect(scaledServerX, scaledServerY,
-                scaledServerX + TestGameCons.BAR_WIDTH * scaleX, scaledServerY + TestGameCons.BAR_HEIGHT * scaleY, paint)
-            paint.color = Color.RED
-            canvas.drawRect(scaledClientX, scaledClientY,
-                scaledClientX + TestGameCons.BAR_WIDTH * scaleX, scaledClientY + TestGameCons.BAR_HEIGHT * scaleY, paint)
+            canvas.drawBitmap(bitmapServerPaddle, scaledServerBarLeft, scaledServerBarTop, paint)
+            canvas.drawBitmap(bitmapClientPaddle, scaledClientBarLeft, scaledClientBarTop, paint)
             paint.color = Color.BLACK
             canvas.drawCircle(scaledBallX, scaledBallY, scaledBallRadius, paint)
+
+            drawController(canvas)
         }
 
         private fun drawController(canvas : Canvas){
