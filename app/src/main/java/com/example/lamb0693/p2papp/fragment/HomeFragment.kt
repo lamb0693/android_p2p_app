@@ -73,6 +73,8 @@ class HomeFragment : Fragment() {
     }
 
     fun addTextToChattingArea(message: String, fromMainActivity: Boolean) {
+        if(message.contains("PEER_HANDLE_IS_SET") || message.contains("SEND_SERVER_INFO") ) return
+
         val tvChatting = thisView?.findViewById<TextView>(R.id.tvChattingArea)
         if(tvChatting == null) Log.e(">>>>", "tvChatting null")
 

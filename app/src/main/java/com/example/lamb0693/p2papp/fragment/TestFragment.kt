@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.ConnectivityManager
@@ -20,6 +21,7 @@ import android.util.AttributeSet
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
@@ -40,6 +42,8 @@ import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
 import com.example.lamb0693.p2papp.socket_thread.test.TestServerSocketThread
 import com.example.lamb0693.p2papp.viewmodel.GameState
 import java.net.InetSocketAddress
+import java.util.Timer
+import java.util.TimerTask
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -84,6 +88,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     private var networkCallback : ConnectivityManager.NetworkCallback? =null
 
+
+    private var startStickX : Float = 0f // point to touch down
+    private var currentPosition = PointF() // Store current position, judge whether isLeft or right
+    // timer action of user periodically
+    private var touchTimer: Timer? = null
+
+
     /***********************************
      * TestGameView
      **********************************/
@@ -100,10 +111,38 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         private lateinit var offscreenCanvas: Canvas
         private lateinit var offscreenBitmapRect : Rect
 
+        private var bitmapControllerInactive : Bitmap
+        private var bitmapControllerNeutral : Bitmap
+        private var bitmapControllerLeft : Bitmap
+        private var bitmapControllerRight : Bitmap
+
+        private var bitmapServerPaddle : Bitmap
+        private var bitmapClientPaddle : Bitmap
+
+        private var bitmapObstacles = arrayOf(
+            BitmapFactory.decodeResource(resources, R.drawable.ball_green),
+            BitmapFactory.decodeResource(resources, R.drawable.ball_brown),
+            BitmapFactory.decodeResource(resources, R.drawable.ball_purple),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_cobalt),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_green),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_yellow),
+            BitmapFactory.decodeResource(resources, R.drawable.drug_pink),
+            BitmapFactory.decodeResource(resources, R.drawable.drug_purple),
+            BitmapFactory.decodeResource(resources, R.drawable.drug_red)
+        )
+
+        private var bitmapRemnant : Bitmap
+
+        var isUsingStick = false
+        var isDraggingRight = false
+        var isDraggingLeft = false
+
+        var scaledControllerRect = RectF()
+
         private var scaleX: Float = 1.0f
         private var scaleY: Float = 1.0f
 
-        var gameData = TestGameData()
+        var gameData = TestGameData()  // class를 만드는 것은 의미 없음. 단지 만들어 놓음
 
         init {
             paint.color = Color.BLUE // Change color as needed
@@ -111,8 +150,23 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
             //400X600 image
             backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.background)
+            //Controller(size of 75*60)
+            bitmapControllerInactive = BitmapFactory.decodeResource(resources, R.drawable.neutral_inactive)
+            bitmapControllerNeutral = BitmapFactory.decodeResource(resources, R.drawable.neutral)
+            bitmapControllerLeft = BitmapFactory.decodeResource(resources, R.drawable.left)
+            bitmapControllerRight = BitmapFactory.decodeResource(resources, R.drawable.right)
+
+            bitmapServerPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_server)
+            bitmapClientPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_client)
+
+            bitmapRemnant = BitmapFactory.decodeResource(resources, R.drawable.remant)
         }
 
+        /*****************************
+         * onSizeChanged  - bitmap 및 offScreenBitmp을 resize
+         * onDraw() 에서 drawGame을 call
+         * drawGame() - rescale 된 bitmap에 rescale된 immge를 그림
+         *****************************/
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
             super.onSizeChanged(w, h, oldw, oldh)
 
@@ -124,6 +178,38 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             val scaledWidth = (TestGameCons.BITMAP_WIDTH * scaleX).toInt()
             val scaledHeight = (TestGameCons.BITMAP_HEIGHT * scaleY).toInt()
 
+            val scaledPaddleWidth = (TestGameCons.BAR_WIDTH * scaleX).toInt()
+            val scaledPaddleHeight = (TestGameCons.BAR_HEIGHT * scaleX).toInt()
+
+            // resize bitmaps of Controller
+            bitmapControllerInactive = Bitmap.createScaledBitmap(bitmapControllerInactive,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerNeutral = Bitmap.createScaledBitmap(bitmapControllerNeutral,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerLeft = Bitmap.createScaledBitmap(bitmapControllerLeft,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerRight = Bitmap.createScaledBitmap(bitmapControllerRight,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+
+            bitmapRemnant = Bitmap.createScaledBitmap(bitmapRemnant,
+                60*scaleX.toInt(), 60*scaleY.toInt(), true)
+
+            // Determine the scaledControllerRect = stick 이 위치할 장소
+            scaledControllerRect.left = TestGameCons.CONTROLLER_RECT.left * scaleX
+            scaledControllerRect.top = TestGameCons.CONTROLLER_RECT.top * scaleY
+            scaledControllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
+            scaledControllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
+
+            // paddle bitmap resize
+            bitmapServerPaddle = Bitmap.createScaledBitmap(bitmapServerPaddle,
+                scaledPaddleWidth, scaledPaddleHeight, true)
+            bitmapClientPaddle = Bitmap.createScaledBitmap(bitmapClientPaddle,
+                scaledPaddleWidth, scaledPaddleHeight, true)
+
             // Initialize the offscreen bitmap and canvas with scaled dimensions
             offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
             offscreenBitmapRect = Rect(0, 0, offscreenBitmap.width, offscreenBitmap.height )
@@ -132,34 +218,59 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         private fun drawGame(canvas : Canvas){
             canvas.drawBitmap(backgroundBitmap, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null)
-            // Draw whatever you want here for your game view
-            // Make sure to scale your graphics based on the scaleX and scaleY factors
-            val scaledServerX = (gameData.serverX - TestGameCons.barWidth/2) * scaleX
-            val scaledServerY = (gameData.serverY - TestGameCons.barHeight/2) * scaleY
-            val scaledClientX = (gameData.clientX - TestGameCons.barWidth/2) * scaleX
-            val scaledClientY = (gameData.clientY - TestGameCons.barHeight/2) * scaleY
+
+            // bar 와 ball 그리기
+            val scaledServerBarLeft = (gameData.serverX - TestGameCons.BAR_WIDTH/2f) * scaleX
+            val scaledServerBarTop = (gameData.serverY - TestGameCons.BAR_HEIGHT/2f) * scaleY
+            val scaledClientBarLeft = (gameData.clientX - TestGameCons.BAR_WIDTH/2f) * scaleX
+            val scaledClientBarTop = (gameData.clientY - TestGameCons.BAR_HEIGHT/2f) * scaleY
             val scaledBallX = gameData.ballX * scaleX
             val scaledBallY = gameData.ballY * scaleY
             val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
 
-            paint.color = Color.BLUE
-            canvas.drawRect(scaledServerX, scaledServerY,
-                scaledServerX + TestGameCons.barWidth * scaleX, scaledServerY + TestGameCons.barHeight * scaleY, paint)
-            paint.color = Color.RED
-            canvas.drawRect(scaledClientX, scaledClientY,
-                scaledClientX + TestGameCons.barWidth * scaleX, scaledClientY + TestGameCons.barHeight * scaleY, paint)
+            // obstacle 그리기
+            gameData.obstacles.forEach{
+                canvas.drawBitmap(bitmapObstacles[it.type], null, it.getScaledRect(scaleX, scaleY), paint )
+            }
+
+            gameData.obstacleRemnant?.let{
+                canvas.drawBitmap(bitmapRemnant, (it.x-30)*scaleX, (it.y-30)*scaleY ,paint )
+                gameData.obstacleRemnant = null // 화면 출력후 업애준다
+            }
+
+            canvas.drawBitmap(bitmapServerPaddle, scaledServerBarLeft, scaledServerBarTop, paint)
+            canvas.drawBitmap(bitmapClientPaddle, scaledClientBarLeft, scaledClientBarTop, paint)
             paint.color = Color.BLACK
             canvas.drawCircle(scaledBallX, scaledBallY, scaledBallRadius, paint)
+
+            drawController(canvas)
+        }
+
+        private fun drawController(canvas : Canvas){
+            if(!isUsingStick) canvas.drawBitmap(bitmapControllerInactive,
+                scaledControllerRect.left, scaledControllerRect.top, paint)
+            else if(!isDraggingRight && !isDraggingLeft) canvas.drawBitmap(
+                bitmapControllerNeutral, scaledControllerRect.left, scaledControllerRect.top, paint)
+            else if(isDraggingRight) canvas.drawBitmap(
+                bitmapControllerRight, scaledControllerRect.left, scaledControllerRect.top, paint)
+            else canvas.drawBitmap(bitmapControllerLeft,
+                scaledControllerRect.left, scaledControllerRect.top, paint)
         }
 
         override fun onDraw(canvas: Canvas) {
             super.onDraw(canvas)
 
-            offscreenCanvas.drawColor(Color.WHITE) // Clear the offscreen canvas
             drawGame(offscreenCanvas)
-
             canvas.drawBitmap(offscreenBitmap, null, offscreenBitmapRect, null)
         }
+
+        // With this code and view.performClick() in touch Listener is needed
+        override fun performClick(): Boolean {
+            super.performClick()
+            // Handle the click action here if needed
+            return true
+        }
+
     }
 
     /***********************************
@@ -183,6 +294,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             }
         }
     }
+
+    // Fragment의 Button 초기화 및 설정
     private fun initTestViewButtonAndListener(){
         buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
@@ -242,6 +355,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         return testView
     }
 
+    // View가 생성되고 난 뒤 Socket 연결 및 Controller를 초기화 함
     @RequiresApi(Build.VERSION_CODES.Q)
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -257,13 +371,72 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         initGameInterfaceListener()
     }
 
+    // Game Controller 초기화 및 설정
     private fun initGameInterfaceListener() {
-        testGameView.setOnClickListener{
-            if(mainActivity.asServer!!){
-                serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
-            }else {
-                clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_RIGHT")
+        testGameView.setOnTouchListener { view, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    // Check if touch is inside the controller area
+                    if (testGameView.scaledControllerRect.contains(event.x, event.y)) {
+                        testGameView.isUsingStick = true
+                        startStickX = event.x
+                        currentPosition.x = event.x
+                        currentPosition.y = event.y
+                        true // Indicate that touch event is consumed
+                    } else {
+                        false // Indicate that touch event is not consumed
+                    }
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    // Update current position if user is using the stick
+                    if (testGameView.isUsingStick) {
+                        currentPosition.x = event.x
+                        currentPosition.y = event.y
+                    }
+                    true // Indicate that touch event is consumed
+                }
+                MotionEvent.ACTION_UP -> {
+                    testGameView.isUsingStick = false
+                    view.performClick() // Call performClick() on ACTION_UP
+                    true // Indicate that touch event is consumed
+                }
+                else -> false // Return false for other touch event actions
             }
+        }
+    }
+
+    // timer를 on or off  => Game Controller 의 상태를 주기적으로 Server로 보냄
+    private fun startTouchEventTimer(activate : Boolean) {
+        if (activate) {
+            if (touchTimer == null) {
+                touchTimer = Timer().apply {
+                    scheduleAtFixedRate(object : TimerTask() {
+                        override fun run() {
+                            testGameView.isDraggingRight = currentPosition.x > startStickX + TestGameCons.CONTROLLER_NEUTRAL_WIDTH
+                            testGameView.isDraggingLeft = currentPosition.x < startStickX - TestGameCons.CONTROLLER_NEUTRAL_WIDTH
+
+                            if (!testGameView.isUsingStick) return
+
+                            if (mainActivity.asServer!!) {
+                                if (testGameView.isDraggingRight) {
+                                    serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
+                                } else if (testGameView.isDraggingLeft) {
+                                    serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_LEFT")
+                                }
+                            } else {
+                                if (testGameView.isDraggingRight) {
+                                    clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_RIGHT")
+                                } else if (testGameView.isDraggingLeft) {
+                                    clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_LEFT")
+                                }
+                            }
+                        }
+                    }, 0, TestGameCons.TOUCH_EVENT_INTERVAL)
+                }
+            }
+        } else {
+            touchTimer?.cancel() // Stop the timer if it's running
+            touchTimer = null // Reset the timer instance
         }
     }
 
@@ -297,6 +470,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         }
     }
 
+    // InitServerSocket후 대기중 상대방 refuse 할때 사용
+    // callback unregister가 다음 접속을 위해 중요
     fun cancelInitServerSocket(){
         try{
             // network 초기화 를 reset --> detach()에서
@@ -341,7 +516,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
                 Log.i(">>>>", "NetworkCallback onAvailable")
-                //Toast.makeText(mainActivity, "Socket network available", Toast.LENGTH_LONG).show()
+                //Toast.makeText(mainActivity, "Socket network available", Toast.LENGTH_SHORT).show()
                 try{
                     serverSocketThread?.start()
                 } catch ( e : Exception){
@@ -407,7 +582,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 val peerAwareInfo = networkCapabilities.transportInfo as WifiAwareNetworkInfo
                 serverSocketAddress =InetSocketAddress(peerAwareInfo.peerIpv6Addr, peerAwareInfo.port)
 
-                //Toast.makeText(mainActivity, "Got Server Address\nStarting client socket thread", Toast.LENGTH_LONG).show()
+                //Toast.makeText(mainActivity, "Got Server Address\nStarting client socket thread", Toast.LENGTH_SHORT).show()
 
                 if(clientSocketThread == null){
                     try{
@@ -439,7 +614,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     override fun onConnectionMade() {
         mainActivity.runOnUiThread{
             testViewModel.setSocketConnected(true)
-            Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_LONG).show()
+            Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_SHORT).show()
             buttonStart?.isEnabled = true
         }
     }
@@ -465,6 +640,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
      * onGameStateMessageFromThread :  from server thread server만 해당
      * onGameStateFromServerViaSocket : from client thread  client만 해당
      * processGameStateChange
+     * 두 개 다 동일한 code 구현 or processGameStateChange에서 구현
      */
     override fun onGameStateMessageFromThread(gameState: GameState) {
         if(mainActivity.asServer!!){
@@ -472,7 +648,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             mainActivity.runOnUiThread{
                 processGameStateChange(gameState)
             }
-
         }
     }
 
@@ -489,15 +664,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     private fun processGameStateChange(gameState: GameState) {
         when(gameState){
             GameState.STARTED-> {
-                Toast.makeText(mainActivity, "game started", Toast.LENGTH_LONG).show()
+                Toast.makeText(mainActivity, "game started", Toast.LENGTH_SHORT).show()
                 testViewModel.setGameState(GameState.STARTED)
+                startTouchEventTimer(true)
             }
             GameState.PAUSED-> {
-                Toast.makeText(mainActivity, "game paused", Toast.LENGTH_LONG).show()
+                startTouchEventTimer(false)
+                Toast.makeText(mainActivity, "game paused", Toast.LENGTH_SHORT).show()
                 testViewModel.setGameState(GameState.PAUSED)
             }
             GameState.STOPPED-> {
-                Toast.makeText(mainActivity, "game stopped", Toast.LENGTH_LONG).show()
+                startTouchEventTimer(false)
+                Toast.makeText(mainActivity, "game stopped", Toast.LENGTH_SHORT).show()
                 testViewModel.setGameState(GameState.STOPPED)
             }
         }
@@ -512,7 +690,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
      */
     override fun onGameDataReceivedFromThread(gameData: TestGameData) {
         if(mainActivity.asServer!!){
-            Log.i(">>>>", "received gameData in TestFragment : $gameData")
+            //Log.i(">>>>", "received gameData in TestFragment : $gameData")
             processGameData(gameData)
         } else {
             Log.e(">>>>", "onGameDataReceivedFromThread to client")
@@ -522,24 +700,58 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         if(mainActivity.asServer!!) {
             Log.e(">>>>", "onGameDataReceivedFromServerViaSocket to server")
         } else {
-            val gameData = TestGameData.fromString(strGameData)
-            Log.i(">>>>", "received gameData from server : $gameData")
-            if (gameData is TestGameData) {
-                processGameData(gameData)
-            } else {
-                Log.e(">>>>", "onGameDataReceivedFromServerViaSocket,  fail to Convert")
+            try{
+                val gameData = TestGameData.fromString(strGameData)
+                //Log.i(">>>>", "received gameData from server : $gameData")
+                if (gameData is TestGameData) {
+                    processGameData(gameData)
+                } else {
+                    Log.e(">>>>", "onGameDataReceivedFromServerViaSocket,  fail to Convert")
+                }
+            } catch(e : Exception) {
+                Log.e(">>>>", "onGameDataReceivedFromServerViaSocket, ${e.message}")
             }
-        }
+         }
     }
+
     private fun processGameData(gameData: TestGameData) {
         testGameView.gameData = gameData
         testGameView.invalidate()
+    }
+
+    /**********************************]
+     * Winnder message 처리
+     * Thread에서 실행 시킴 : runOnUiThread 필요
+     * onGameWinnerFromServerViaSocket : client용
+     * onGameWinnerFromThread : server용
+     ***********************************/
+    override fun onGameWinnerFromThread(isServerWin: Boolean) {
+        mainActivity.runOnUiThread {
+            if(mainActivity.asServer!!) {
+                if(isServerWin) SimpleConfirmDialog(mainActivity,
+                    "win", "You won this game").showDialog()
+                else SimpleConfirmDialog(mainActivity,
+                    "lose", "You lost this game").showDialog()
+            }
+        }
+    }
+
+    override fun onGameWinnerFromServerViaSocket(isServerWin: Boolean) {
+        mainActivity.runOnUiThread{
+            if(!mainActivity.asServer!!) {
+                if(!isServerWin) SimpleConfirmDialog(mainActivity,
+                    "win", "You won this game").showDialog()
+                else SimpleConfirmDialog(mainActivity,
+                    "lose", "You lost this game").showDialog()
+            }
+        }
     }
 
     /*********************
      * Other Message From thread  :  client 만 해당
      * onOtherMessageReceivedFromServerViaSocket : Server 만 해당
      * onOtherMessageFromClientViaSocket
+     * 현재는 HEART_BEAT 외에는 없어서 없어도 될 듯함
      **************************/
     override fun onOtherMessageReceivedFromServerViaSocket(receivedMessage: String) {
         if(mainActivity.asServer!!) return
