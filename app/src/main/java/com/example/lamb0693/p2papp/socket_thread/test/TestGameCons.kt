@@ -22,4 +22,7 @@ object TestGameCons {
 
     // 사용자 인풋 refresh interval
     const val TOUCH_EVENT_INTERVAL = 100L
+
+    const val SCORE_SIZE = 70
+    const val PRINT_SCORE_BASELINE = 575
 }

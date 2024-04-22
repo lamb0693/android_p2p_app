@@ -103,6 +103,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
     ) : View(context, attrs, defStyleAttr) {
+        var serverWin = 0
+        var clientWin = 0
 
         private val paint: Paint = Paint()
 
@@ -232,16 +234,27 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             gameData.obstacles.forEach{
                 canvas.drawBitmap(bitmapObstacles[it.type], null, it.getScaledRect(scaleX, scaleY), paint )
             }
-
             gameData.obstacleRemnant?.let{
                 canvas.drawBitmap(bitmapRemnant, (it.x-30)*scaleX, (it.y-30)*scaleY ,paint )
                 gameData.obstacleRemnant = null // 화면 출력후 업애준다
             }
 
+            // draw Paddle and ball
             canvas.drawBitmap(bitmapServerPaddle, scaledServerBarLeft, scaledServerBarTop, paint)
             canvas.drawBitmap(bitmapClientPaddle, scaledClientBarLeft, scaledClientBarTop, paint)
             paint.color = Color.BLACK
             canvas.drawCircle(scaledBallX, scaledBallY, scaledBallRadius, paint)
+
+            // draw Score
+            val serverScoreX = 270f * scaleX
+            val clientScoreX = 340f * scaleX
+            val scoreY = TestGameCons.PRINT_SCORE_BASELINE * scaleY
+            paint.color = Color.BLUE
+            paint.textSize = TestGameCons.SCORE_SIZE * scaleX
+            canvas.drawText("$serverWin", serverScoreX, scoreY, paint)
+            paint.color = Color.RED
+            paint.textSize = TestGameCons.SCORE_SIZE * scaleX
+            canvas.drawText("$clientWin", clientScoreX, scoreY, paint)
 
             drawController(canvas)
         }
@@ -728,22 +741,34 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     override fun onGameWinnerFromThread(isServerWin: Boolean) {
         mainActivity.runOnUiThread {
             if(mainActivity.asServer!!) {
-                if(isServerWin) SimpleConfirmDialog(mainActivity,
-                    "win", "You won this game").showDialog()
-                else SimpleConfirmDialog(mainActivity,
-                    "lose", "You lost this game").showDialog()
+                if(isServerWin) {
+                    testGameView.serverWin ++
+                    SimpleConfirmDialog(mainActivity,
+                        "win", "You won this game").showDialog()
+                } else {
+                    testGameView.clientWin ++
+                    SimpleConfirmDialog(mainActivity,
+                        "lose", "You lost this game").showDialog()
+                }
             }
+            testGameView.invalidate()
         }
     }
 
     override fun onGameWinnerFromServerViaSocket(isServerWin: Boolean) {
         mainActivity.runOnUiThread{
             if(!mainActivity.asServer!!) {
-                if(!isServerWin) SimpleConfirmDialog(mainActivity,
-                    "win", "You won this game").showDialog()
-                else SimpleConfirmDialog(mainActivity,
-                    "lose", "You lost this game").showDialog()
+                if(!isServerWin) {
+                    testGameView.clientWin ++
+                    SimpleConfirmDialog(mainActivity,
+                        "win", "You won this game").showDialog()
+                } else {
+                    testGameView.serverWin++
+                    SimpleConfirmDialog(mainActivity,
+                        "lose", "You lost this game").showDialog()
+                }
             }
+            testGameView.invalidate()
         }
     }
 
