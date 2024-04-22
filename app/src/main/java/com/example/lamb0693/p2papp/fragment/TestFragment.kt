@@ -125,11 +125,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             BitmapFactory.decodeResource(resources, R.drawable.ball_purple),
             BitmapFactory.decodeResource(resources, R.drawable.cube_cobalt),
             BitmapFactory.decodeResource(resources, R.drawable.cube_green),
-            BitmapFactory.decodeResource(resources, R.drawable.cube_cobalt),
+            BitmapFactory.decodeResource(resources, R.drawable.cube_yellow),
             BitmapFactory.decodeResource(resources, R.drawable.drug_pink),
             BitmapFactory.decodeResource(resources, R.drawable.drug_purple),
             BitmapFactory.decodeResource(resources, R.drawable.drug_red)
         )
+
+        private var bitmapRemnant : Bitmap
 
         var isUsingStick = false
         var isDraggingRight = false
@@ -157,8 +159,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             bitmapServerPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_server)
             bitmapClientPaddle = BitmapFactory.decodeResource(resources, R.drawable.paddle_client)
 
-//            for()
-//            bitmapObstacle1 = BitmapFactory.decodeResource(resources, R.drawable.ball_green)
+            bitmapRemnant = BitmapFactory.decodeResource(resources, R.drawable.remant)
         }
 
         /*****************************
@@ -194,6 +195,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
                 (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
 
+            bitmapRemnant = Bitmap.createScaledBitmap(bitmapRemnant,
+                60*scaleX.toInt(), 60*scaleY.toInt(), true)
+
             // Determine the scaledControllerRect = stick 이 위치할 장소
             scaledControllerRect.left = TestGameCons.CONTROLLER_RECT.left * scaleX
             scaledControllerRect.top = TestGameCons.CONTROLLER_RECT.top * scaleY
@@ -227,6 +231,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             // obstacle 그리기
             gameData.obstacles.forEach{
                 canvas.drawBitmap(bitmapObstacles[it.type], null, it.getScaledRect(scaleX, scaleY), paint )
+            }
+
+            gameData.obstacleRemnant?.let{
+                canvas.drawBitmap(bitmapRemnant, (it.x-30)*scaleX, (it.y-30)*scaleY ,paint )
+                gameData.obstacleRemnant = null // 화면 출력후 업애준다
             }
 
             canvas.drawBitmap(bitmapServerPaddle, scaledServerBarLeft, scaledServerBarTop, paint)

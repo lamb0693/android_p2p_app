@@ -1,5 +1,6 @@
 package com.example.lamb0693.p2papp.socket_thread.test
 
+import android.graphics.PointF
 import com.google.gson.Gson
 
 class TestGameData() {
@@ -16,6 +17,7 @@ class TestGameData() {
     var ballRadius : Float = 10.0F
 
     var obstacles =  mutableListOf<Obstacle>()
+    var obstacleRemnant : PointF? = null // 1000 not exist
 
     fun resetData() {
         serverX = 200.0f

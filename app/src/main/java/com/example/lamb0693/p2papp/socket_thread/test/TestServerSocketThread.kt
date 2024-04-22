@@ -25,15 +25,10 @@ class TestServerSocketThread (
 
         count ++
 
-        // obstacle 생성 및 이동
-        if( count%obstacleGenerationInterval == 0) {
-            gameData.obstacles.add(Obstacle())
-        }
-        gameData.obstacles.forEach{
-            it.move()
-        }
+        // obstacle 이동 및 범위 초과하면 remove
+        gameData.obstacles.forEach{it.move() }
         gameData.obstacles.removeIf {
-            it.curPosX > TestGameCons.BITMAP_WIDTH
+            it.curPosX > TestGameCons.BITMAP_WIDTH || it.curPosX < 0
         }
 
         // 게임 진행
@@ -72,6 +67,12 @@ class TestServerSocketThread (
             //팅겨 나간 것으로 반영
             tempPoint.x = TestGameCons.BITMAP_WIDTH - 2 * (tempPoint.x - TestGameCons.BITMAP_WIDTH)
         }
+
+        // obstacle 충돌 처리, tempPoint값이 함수 안에서 수정 됨
+        if(tempPoint.y in 100.0..400.0) {
+            processCollideWithObstacle(tempPoint)
+        }
+
         // 패들 충돌 처리, tempPoint 값이 함수 안에서 수정 됨
         if(gameData.ballY > 420 && gameData.ballMoveY>0) processCollideWithServerPaddle(tempPoint)
         if(gameData.ballY < 100 && gameData.ballMoveY<0) processCollideWithClientPaddle(tempPoint)
@@ -79,6 +80,11 @@ class TestServerSocketThread (
         // 계산한 temp 값으로 새로 ball 위치 결정
         gameData.ballX = tempPoint.x
         gameData.ballY = tempPoint.y
+
+        // obstacle 생성
+        if( count%obstacleGenerationInterval == 0) {
+            gameData.obstacles.add(Obstacle())
+        }
     }
 
     private fun processCollideWithServerPaddle(tempPoint: PointF) : Boolean{
@@ -238,6 +244,21 @@ class TestServerSocketThread (
             if(manualRedraw) sendGameDataToFragments()
         } else {
             Log.e(">>>>", "processGameDataInServer error in String. $strAction")
+        }
+    }
+
+    private fun processCollideWithObstacle(tempPoint: PointF){
+        for (indexOfObstacle in gameData.obstacles.indices) {
+            val obstacle = gameData.obstacles[indexOfObstacle]
+            if (obstacle.getRect().contains(tempPoint.x, tempPoint.y)) {
+                Log.i(">>>>", "collide with obstacle")
+                // 반대 방향으로 진행 설정
+                gameData.ballMoveY *= -1
+                // 충돌한 것은 remove 후 for loop 에서 나감
+                gameData.obstacles.removeAt(indexOfObstacle)
+                gameData.obstacleRemnant = obstacle.getCurrentLocation() //display 후 null로
+                break
+            }
         }
     }
 
