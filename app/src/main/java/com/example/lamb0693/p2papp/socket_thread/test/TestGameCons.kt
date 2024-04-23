@@ -3,8 +3,13 @@ package com.example.lamb0693.p2papp.socket_thread.test
 import android.graphics.RectF
 
 object TestGameCons {
-    const val BAR_WIDTH : Float = 80.0F
-    const val BAR_HEIGHT : Float = 16.0F
+    //const val BAR_WIDTH_N : Float = 80.0F
+    //const val BAR_WIDTH_L : Float = 100.0F
+    //const val BAR_WIDTH_S : Float = 60.0F
+    const val BAR_NORMAL = 0
+    const val BAR_LARGE = 1
+    const val BAR_SMALL = 2
+    //const val BAR_HEIGHT : Float = 16.0F
 
     // 화면 refreshing interval
     const val TEST_GAME_INTERVAL = 100L
@@ -25,4 +30,7 @@ object TestGameCons {
 
     const val SCORE_SIZE = 70
     const val PRINT_SCORE_BASELINE = 575
+
+    //effect 관련
+    const val EFFECT_REMAIN_SIZE = 40
 }
