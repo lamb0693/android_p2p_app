@@ -3,9 +3,6 @@ package com.example.lamb0693.p2papp.socket_thread.test
 import android.graphics.RectF
 
 object TestGameCons {
-    //const val BAR_WIDTH_N : Float = 80.0F
-    //const val BAR_WIDTH_L : Float = 100.0F
-    //const val BAR_WIDTH_S : Float = 60.0F
     const val BAR_NORMAL = 0
     const val BAR_LARGE = 1
     const val BAR_SMALL = 2

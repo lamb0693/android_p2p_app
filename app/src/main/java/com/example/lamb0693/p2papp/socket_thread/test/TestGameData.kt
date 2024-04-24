@@ -12,7 +12,7 @@ class TestGameData() {
     var ballY : Float = 100.0F
     var ballMoveX : Float = 5.4F
     var ballMoveY : Float = 5.4F
-    var ballRadius : Float = 10.0F
+    var ballRadius : Float = 15.0F
 
     var obstacles =  mutableListOf<Obstacle>()
     var obstacleRemnant : PointF? = null // 1000 not exist
