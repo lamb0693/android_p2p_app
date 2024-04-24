@@ -2,6 +2,7 @@ package com.example.lamb0693.p2papp.socket_thread.test
 
 import android.graphics.Picture
 import android.graphics.PointF
+import android.graphics.RectF
 import android.util.Log
 import com.example.lamb0693.p2papp.socket_thread.ServerSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
@@ -32,11 +33,9 @@ class TestServerSocketThread (
         }
 
         // 게임 진행
-        val tempPoint = PointF()
 
         // 정상 진행 한다고 가정
-        tempPoint.x = gameData.ballX + gameData.ballMoveX
-        tempPoint.y = gameData.ballY + gameData.ballMoveY
+        val tempPoint = gameData.ball.testMove()
 
         // 위 아래로 벗어나면 게임 중단
         if (tempPoint.y < 0 || tempPoint.y > 500) {
@@ -57,13 +56,13 @@ class TestServerSocketThread (
         // 왼쪽 오른쪽 벽 밖이면 방향 전환 후 x 좌표를 반대로
         if (tempPoint.x <= 0) {
             // x movement를 반대로 설정하고
-            gameData.ballMoveX = -gameData.ballMoveX
+            gameData.ball.delta.x *= (-1)
             // 팅겨나간 것으로 반영
             tempPoint.x *= -1
         } else if (tempPoint.x >= TestGameCons.BITMAP_WIDTH){
             //오른쪽 벽 밖에 대한 처리
             // x movement를 반대로 설정
-            gameData.ballMoveX *= (-1)
+            gameData.ball.delta.x *= (-1)
             //팅겨 나간 것으로 반영
             tempPoint.x = TestGameCons.BITMAP_WIDTH - 2 * (tempPoint.x - TestGameCons.BITMAP_WIDTH)
         }
@@ -74,12 +73,11 @@ class TestServerSocketThread (
         }
 
         // 패들 충돌 처리, tempPoint 값이 함수 안에서 수정 됨
-        if(gameData.ballY > 420 && gameData.ballMoveY>0) processCollideWithServerPaddle(tempPoint)
-        if(gameData.ballY < 100 && gameData.ballMoveY<0) processCollideWithClientPaddle(tempPoint)
+        if(gameData.ball.pos.y > 420 && gameData.ball.delta.y >0) processCollideWithServerPaddle(tempPoint)
+        if(gameData.ball.pos.y < 100 && gameData.ball.delta.y <0) processCollideWithClientPaddle(tempPoint)
 
         // 계산한 temp 값으로 새로 ball 위치 결정
-        gameData.ballX = tempPoint.x
-        gameData.ballY = tempPoint.y
+        gameData.ball.pos = tempPoint
 
         // effectServer ,effectClient가 있으면 obstacle count 진행
         // 1보다 크면 0을 만들고, 뺀 결과 0이면 effect를 없앤다
@@ -114,86 +112,90 @@ class TestServerSocketThread (
         Log.i(">>>>", "executing processCollideWithServerPaddle")
 
         // y 좌표가 collision line을 통과 햇는지 확인
-        if(! gameData.serverPaddle.passCollisionBorder(PointF(gameData.ballX, gameData.ballY)
-                    , tempPoint, gameData.ballRadius)) return
+        if(! gameData.serverPaddle.passCollisionBorder(gameData.ball, tempPoint) ) return
 
         // 표면 line으로 옮김
-        val fraction = gameData.serverPaddle.moveBackToCollisionBorder(PointF(gameData.ballX, gameData.ballY)
-            , tempPoint, gameData.ballRadius, gameData.ballMoveX, gameData.ballMoveY)
+        val fraction = gameData.serverPaddle.moveBackToCollisionBorder(gameData.ball, tempPoint)
 
-        if( gameData.serverPaddle.isOnTheCollisionLine(tempPoint, gameData.ballRadius)) {
+        if( gameData.serverPaddle.isOnTheCollisionLine(tempPoint, gameData.ball.radius)) {
             Log.i(">>>>", "Line 안이라 반사 처리")
             gameData.isServerPlaying = true // server가 play한 것으로 처리
             val passedPoint = gameData.serverPaddle.getPointOfCollisionLine(tempPoint.x)
             Log.i(">>>>", "Paddle의 $passedPoint 부분에 부딛힘")
-            resetServerDelta(passedPoint)
-            tempPoint.x += (1-fraction) * gameData.ballMoveX
-            tempPoint.y += (1-fraction) * gameData.ballMoveY
+            resetServerDelta(passedPoint) // delta 가 변한다
+            tempPoint.x += (1-fraction) * gameData.ball.delta.x
+            tempPoint.y += (1-fraction) * gameData.ball.delta.y
         } else {
+            // tempPoint는 moveBack 된 temp point이니 원래 위치에다 그대로 이동
             Log.i(">>>>", "line 밖이라 그냥 진행한 것으로 처리")
             // 되돌린 후에는 그냥 돌아가려면 되돌림을 취소하고 그냥 진행한 것을 적용해 주어야 함
-            tempPoint.x= gameData.ballX + gameData.ballMoveX
-            tempPoint.y = gameData.ballY + gameData.ballMoveY
+            // val이라 값만 재 설정
+            tempPoint.x= gameData.ball.pos.x + gameData.ball.delta.x
+            tempPoint.y = gameData.ball.pos.y + gameData.ball.delta.y
         }
     }
 
     // x : 부딛힌 높이 에서의 X좌표, start : bar의 start 지점의 x 좌표
     // 부딛힌 부위에 따라 반사각을 다르게 설정
     private fun resetServerDelta(passedPoint : Float) {
-        if(passedPoint > 0.9) {gameData.ballMoveX =7f; gameData.ballMoveY=-3f}
-        else if(passedPoint > 0.8) {gameData.ballMoveX = 5.4f; gameData.ballMoveY = -5.4f}
-        else if(passedPoint > 0.7) {gameData.ballMoveX = 4.1f; gameData.ballMoveY = -6.4f}
-        else if(passedPoint > 0.5) {gameData.ballMoveX = 3f; gameData.ballMoveY = -7f}
-        else if(passedPoint > 0.3) {gameData.ballMoveX = -3f; gameData.ballMoveY = -7f}
-        else if(passedPoint > 0.2) {gameData.ballMoveX = -4.1f; gameData.ballMoveY = -6.4f}
-        else if(passedPoint > 0.1) {gameData.ballMoveX = -5.4f; gameData.ballMoveY = -5.4f}
-        else {gameData.ballMoveX =-7f; gameData.ballMoveY=-3f}
+        if(passedPoint > 0.9) {gameData.ball.delta.x =7f; gameData.ball.delta.y=-3f}
+        else if(passedPoint > 0.8) {gameData.ball.delta.x = 5.4f; gameData.ball.delta.y = -5.4f}
+        else if(passedPoint > 0.7) {gameData.ball.delta.x = 4.1f; gameData.ball.delta.y = -6.4f}
+        else if(passedPoint > 0.5) {gameData.ball.delta.x = 3f; gameData.ball.delta.y = -7f}
+        else if(passedPoint > 0.3) {gameData.ball.delta.x = -3f; gameData.ball.delta.y = -7f}
+        else if(passedPoint > 0.2) {gameData.ball.delta.x = -4.1f; gameData.ball.delta.y = -6.4f}
+        else if(passedPoint > 0.1) {gameData.ball.delta.x = -5.4f; gameData.ball.delta.y = -5.4f}
+        else {gameData.ball.delta.x =-7f; gameData.ball.delta.y=-3f}
     }
 
     private fun processCollideWithClientPaddle(tempPoint: PointF) {
         Log.i(">>>>", "executing processCollideWithClientPaddle")
 
         // y 좌표가 collision line을 통과 햇는지 확인
-        if(! gameData.clientPaddle.passCollisionBorder(PointF(gameData.ballX, gameData.ballY)
-                , tempPoint, gameData.ballRadius)) return
+        if(! gameData.clientPaddle.passCollisionBorder(gameData.ball, tempPoint)) return
 
         // 표면 line으로 옮김
-        val fraction = gameData.clientPaddle.moveBackToCollisionBorder(PointF(gameData.ballX, gameData.ballY)
-            , tempPoint, gameData.ballRadius, gameData.ballMoveX, gameData.ballMoveY)
+        val fraction = gameData.clientPaddle.moveBackToCollisionBorder(gameData.ball, tempPoint)
 
-        if( gameData.clientPaddle.isOnTheCollisionLine(tempPoint, gameData.ballRadius)) {
+        if( gameData.clientPaddle.isOnTheCollisionLine(tempPoint, gameData.ball.radius)) {
             Log.i(">>>>", "Line 안이라 반사 처리")
             gameData.isServerPlaying = false // server가 play한 것으로 처리
             val passedPoint = gameData.clientPaddle.getPointOfCollisionLine(tempPoint.x)
             Log.i(">>>>", "Paddle의 $passedPoint 부분에 부딛힘")
             resetClientDelta(passedPoint)
-            tempPoint.x += (1-fraction) * gameData.ballMoveX
-            tempPoint.y += (1-fraction) * gameData.ballMoveY
+            tempPoint.x += (1-fraction) * gameData.ball.delta.x
+            tempPoint.y += (1-fraction) * gameData.ball.delta.y
         } else {
             Log.i(">>>>", "line 밖이라 그냥 진행한 것으로 처리")
             // 되돌린 후에는 그냥 돌아가려면 되돌림을 취소하고 그냥 진행한 것을 적용해 주어야 함
-            tempPoint.x= gameData.ballX + gameData.ballMoveX
-            tempPoint.y = gameData.ballY + gameData.ballMoveY
+            tempPoint.x = gameData.ball.pos.x + gameData.ball.delta.x
+            tempPoint.y = gameData.ball.pos.y + gameData.ball.delta.y
         }
     }
 
     // x : 부딛힌 높이 에서의 X좌표, start : bar의 start 지점의 x 좌표
     // 부딛힌 부위에 따라 반사각을 다르게 설정
     private fun resetClientDelta(pos : Float) {
-        if(pos > 0.9) {gameData.ballMoveX =7f; gameData.ballMoveY=3f}
-        else if(pos > 0.8) {gameData.ballMoveX = 5.4f; gameData.ballMoveY = 5.4f}
-        else if(pos > 0.7) {gameData.ballMoveX = 4.1f; gameData.ballMoveY = 6.4f}
-        else if(pos > 0.5) {gameData.ballMoveX = 3f; gameData.ballMoveY = 7f}
-        else if(pos > 0.3) {gameData.ballMoveX = -3f; gameData.ballMoveY = 7f}
-        else if(pos > 0.2) {gameData.ballMoveX = -4.1f; gameData.ballMoveY = 6.4f}
-        else if(pos > 0.1) {gameData.ballMoveX = -5.4f; gameData.ballMoveY = 5.4f}
-        else {gameData.ballMoveX =-7f; gameData.ballMoveY= 3f}
+        if(pos > 0.9) {gameData.ball.delta.x =7f; gameData.ball.delta.y=3f}
+        else if(pos > 0.8) {gameData.ball.delta.x = 5.4f; gameData.ball.delta.y = 5.4f}
+        else if(pos > 0.7) {gameData.ball.delta.x = 4.1f; gameData.ball.delta.y = 6.4f}
+        else if(pos > 0.5) {gameData.ball.delta.x = 3f; gameData.ball.delta.y = 7f}
+        else if(pos > 0.3) {gameData.ball.delta.x = -3f; gameData.ball.delta.y = 7f}
+        else if(pos > 0.2) {gameData.ball.delta.x = -4.1f; gameData.ball.delta.y = 6.4f}
+        else if(pos > 0.1) {gameData.ball.delta.x = -5.4f; gameData.ball.delta.y = 5.4f}
+        else {gameData.ball.delta.x =-7f; gameData.ball.delta.y= 3f}
     }
 
     private fun processCollideWithObstacle(tempPoint: PointF){
         for (indexOfObstacle in gameData.obstacles.indices) {
             val obstacle = gameData.obstacles[indexOfObstacle]
-            if (obstacle.getRect().contains(tempPoint.x, tempPoint.y)) {
+            val checkRect = RectF(
+                obstacle.getRect().left - gameData.ball.radius,
+                obstacle.getRect().top - gameData.ball.radius,
+                obstacle.getRect().right + gameData.ball.radius,
+                obstacle.getRect().bottom + gameData.ball.radius,
+            )
+            if (checkRect.contains(tempPoint.x, tempPoint.y)) {
                 Log.i(">>>>", "collide with obstacle")
                 // obstacle effect 설정
                 when(obstacle.type){
@@ -203,7 +205,7 @@ class TestServerSocketThread (
                     }
                     // ball 크기 변화
                     3, 4, 5 -> {
-
+                        gameData.ball.setSize(obstacle.type -3)
                     }
                     // paddle 정상화
                     6 -> {
@@ -233,7 +235,7 @@ class TestServerSocketThread (
                 }
 
                 // 반대 방향으로 진행 설정
-                gameData.ballMoveY *= -1
+                gameData.ball.delta.y *= -1
                 // 충돌한 것은 remove 후 for loop 에서 나감
                 gameData.obstacles.removeAt(indexOfObstacle)
                 gameData.obstacleRemnant = obstacle.getCurrentLocation() //display 후 null로

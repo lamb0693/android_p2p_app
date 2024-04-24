@@ -8,11 +8,7 @@ class TestGameData() {
     val serverPaddle = ServerPaddle()
     val clientPaddle = ClientPaddle()
 
-    var ballX : Float = 100.0F
-    var ballY : Float = 100.0F
-    var ballMoveX : Float = 5.4F
-    var ballMoveY : Float = 5.4F
-    var ballRadius : Float = 15.0F
+    val ball  = Ball()
 
     var obstacles =  mutableListOf<Obstacle>()
     var obstacleRemnant : PointF? = null // 1000 not exist
@@ -30,14 +26,10 @@ class TestGameData() {
         clientPaddle.setPaddleState(0)
     }
     fun resetData() {
-        serverPaddle.reset()
-        clientPaddle.reset()
+        serverPaddle.resetPaddle()
+        clientPaddle.resetPaddle()
 
-        ballX = 100.0F
-        ballY = 100.0F
-
-        ballMoveX = 5.0F
-        ballMoveY = 5.0F
+        ball.resetBall()
 
         effectServer = null
         effectRemainServer = 0

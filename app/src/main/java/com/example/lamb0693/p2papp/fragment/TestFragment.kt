@@ -134,7 +134,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource)
         )
 
-        private var bitmapBall = BitmapFactory.decodeResource(resources, R.drawable.ball_3030)
+        private var bitmapScaledBall  = arrayOf(
+            BitmapFactory.decodeResource(resources, R.drawable.ball_3030),  //radius 10
+            BitmapFactory.decodeResource(resources, R.drawable.ball_3030),  // radius 15
+            BitmapFactory.decodeResource(resources, R.drawable.ball_3030),  // radius20
+        )
 
         private var bitmapObstacles = arrayOf(
             BitmapFactory.decodeResource(resources, R.drawable.ball_green),
@@ -213,8 +217,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             scaledControllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
             scaledControllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
 
-
-
             // paddle bitmap resize  0 normla, 1 large  2 small
             Log.i(">>>>", "scaleX at the time of bitamp Scaling : ${scaleX}")
             bitmapScaledServerPaddle[0] = Bitmap.createScaledBitmap(bitmapServerPaddle,
@@ -230,6 +232,14 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             bitmapScaledClientPaddle[2] = Bitmap.createScaledBitmap(bitmapClientPaddle,
                 (60*scaleX).toInt(), (20*scaleY).toInt(), true)
 
+            // scaled ball bitmap 을 만든다
+            bitmapScaledBall[0] = Bitmap.createScaledBitmap(bitmapScaledBall[0],
+                (20*scaleX).toInt(), (20*scaleY).toInt(), true)
+            bitmapScaledBall[1] = Bitmap.createScaledBitmap(bitmapScaledBall[1],
+                (30*scaleX).toInt(), (30*scaleY).toInt(), true)
+            bitmapScaledBall[2] = Bitmap.createScaledBitmap(bitmapScaledBall[2],
+                (40*scaleX).toInt(), (40*scaleY).toInt(), true)
+
             // Initialize the offscreen bitmap and canvas with scaled dimensions
             offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
             offscreenBitmapRect = Rect(0, 0, offscreenBitmap.width, offscreenBitmap.height )
@@ -244,6 +254,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             drawWEffect(canvas)
             drawController(canvas)
         }
+
         private fun drawObstacleAndRemnant(canvas: Canvas){
             gameData.obstacles.forEach{
                 canvas.drawBitmap(bitmapObstacles[it.type], null, it.getScaledRect(scaleX, scaleY), paint )
@@ -264,10 +275,6 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 scaledControllerRect.left, scaledControllerRect.top, paint)
         }
         private fun drawPaddleAndBall(canvas : Canvas){
-            val scaledBallStartX = (gameData.ballX- gameData.ballRadius) * scaleX
-            val scaledBallStartY = (gameData.ballY-gameData.ballRadius) * scaleY
-            val scaledBallRadius = gameData.ballRadius * scaleX // Assuming same scale factor for x and y
-
             // draw Paddle and ball
             var drawingPoint = gameData.serverPaddle.getDrawingPoint(scaleX,scaleY)
             canvas.drawBitmap(bitmapScaledServerPaddle[gameData.serverPaddle.getPaddleState()]
@@ -275,7 +282,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             drawingPoint = gameData.clientPaddle.getDrawingPoint(scaleX, scaleY)
             canvas.drawBitmap(bitmapScaledClientPaddle[gameData.clientPaddle.getPaddleState()]
                 , drawingPoint.x, drawingPoint.y, paint)
-            canvas.drawBitmap(bitmapBall, scaledBallStartX, scaledBallStartY, paint)
+
+            val ballDrawingPoint = gameData.ball.getDrawPoint(scaleX, scaleY)
+            canvas.drawBitmap(bitmapScaledBall[gameData.ball.getSize()], ballDrawingPoint.x, ballDrawingPoint.y, paint)
             Log.i(">>>>", "paddleState : ${gameData.serverPaddle.getPaddleState()}. ${gameData.clientPaddle.getPaddleState()}")
         }
         private fun drawScore(canvas : Canvas){

@@ -1,7 +1,6 @@
 package com.example.lamb0693.p2papp.socket_thread.test
 
 import android.graphics.PointF
-import com.example.lamb0693.p2papp.R
 
 abstract class Paddle {
     var y : Float = 0f // 상속 class 에서 재정의
@@ -43,11 +42,9 @@ abstract class Paddle {
     }
     open fun getRect() {}
     open fun getCollisionBorder() {}
-    abstract fun passCollisionBorder(prevPoint : PointF, currentPoint : PointF,
-             ballRadius : Float) : Boolean
+    abstract fun passCollisionBorder(ball : Ball, currentPoint : PointF) : Boolean
     //currentPoint is to be Changed
-    abstract fun moveBackToCollisionBorder(prevPoint : PointF, currentPoint : PointF,
-             ballRadius : Float , currentMoveX : Float, currentMoveY : Float) : Float
+    abstract fun moveBackToCollisionBorder(ball : Ball, currentPoint : PointF) : Float
 
     // collision 한계를 -10 뭉 + 10pixel 넓게 잡음. 시각적 문제 교정
     fun isOnTheCollisionLine(ball : PointF, ballRadius : Float) : Boolean {
@@ -58,7 +55,7 @@ abstract class Paddle {
     fun getPointOfCollisionLine(curX : Float) : Float{
         return ( curX - (x-paddleWidth/2f) )/paddleWidth
     }
-    open fun reset() {
+    open fun resetPaddle() {
         x= 200f
         setPaddleState(0)
     }
