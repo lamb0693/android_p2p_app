@@ -35,7 +35,7 @@ class TestServerSocketThread (
         // 게임 진행
 
         // 정상 진행 한다고 가정
-        val tempPoint = gameData.ball.testMove()
+        var tempPoint = gameData.ball.testMove()
 
         // 위 아래로 벗어나면 게임 중단
         if (tempPoint.y < 0 || tempPoint.y > 500) {
@@ -123,15 +123,15 @@ class TestServerSocketThread (
             val passedPoint = gameData.serverPaddle.getPointOfCollisionLine(tempPoint.x)
             Log.i(">>>>", "Paddle의 $passedPoint 부분에 부딛힘")
             resetServerDelta(passedPoint) // delta 가 변한다
-            tempPoint.x += (1-fraction) * gameData.ball.delta.x
-            tempPoint.y += (1-fraction) * gameData.ball.delta.y
+            tempPoint.x += (1-fraction) * gameData.ball.delta.x * gameData.ball.spped
+            tempPoint.y += (1-fraction) * gameData.ball.delta.y * gameData.ball.spped
         } else {
             // tempPoint는 moveBack 된 temp point이니 원래 위치에다 그대로 이동
             Log.i(">>>>", "line 밖이라 그냥 진행한 것으로 처리")
             // 되돌린 후에는 그냥 돌아가려면 되돌림을 취소하고 그냥 진행한 것을 적용해 주어야 함
             // val이라 값만 재 설정
-            tempPoint.x= gameData.ball.pos.x + gameData.ball.delta.x
-            tempPoint.y = gameData.ball.pos.y + gameData.ball.delta.y
+            tempPoint.x = gameData.ball.pos.x + gameData.ball.delta.x * gameData.ball.spped
+            tempPoint.y = gameData.ball.pos.y + gameData.ball.delta.y * gameData.ball.spped
         }
     }
 
@@ -163,26 +163,26 @@ class TestServerSocketThread (
             val passedPoint = gameData.clientPaddle.getPointOfCollisionLine(tempPoint.x)
             Log.i(">>>>", "Paddle의 $passedPoint 부분에 부딛힘")
             resetClientDelta(passedPoint)
-            tempPoint.x += (1-fraction) * gameData.ball.delta.x
-            tempPoint.y += (1-fraction) * gameData.ball.delta.y
+            tempPoint.x += (1-fraction) * gameData.ball.delta.x * gameData.ball.spped
+            tempPoint.y += (1-fraction) * gameData.ball.delta.y * gameData.ball.spped
         } else {
             Log.i(">>>>", "line 밖이라 그냥 진행한 것으로 처리")
             // 되돌린 후에는 그냥 돌아가려면 되돌림을 취소하고 그냥 진행한 것을 적용해 주어야 함
-            tempPoint.x = gameData.ball.pos.x + gameData.ball.delta.x
-            tempPoint.y = gameData.ball.pos.y + gameData.ball.delta.y
+            tempPoint.x = gameData.ball.pos.x + gameData.ball.delta.x * gameData.ball.spped
+            tempPoint.y = gameData.ball.pos.y + gameData.ball.delta.y * gameData.ball.spped
         }
     }
 
     // x : 부딛힌 높이 에서의 X좌표, start : bar의 start 지점의 x 좌표
     // 부딛힌 부위에 따라 반사각을 다르게 설정
-    private fun resetClientDelta(pos : Float) {
-        if(pos > 0.9) {gameData.ball.delta.x =7f; gameData.ball.delta.y=3f}
-        else if(pos > 0.8) {gameData.ball.delta.x = 5.4f; gameData.ball.delta.y = 5.4f}
-        else if(pos > 0.7) {gameData.ball.delta.x = 4.1f; gameData.ball.delta.y = 6.4f}
-        else if(pos > 0.5) {gameData.ball.delta.x = 3f; gameData.ball.delta.y = 7f}
-        else if(pos > 0.3) {gameData.ball.delta.x = -3f; gameData.ball.delta.y = 7f}
-        else if(pos > 0.2) {gameData.ball.delta.x = -4.1f; gameData.ball.delta.y = 6.4f}
-        else if(pos > 0.1) {gameData.ball.delta.x = -5.4f; gameData.ball.delta.y = 5.4f}
+    private fun resetClientDelta(passedPoint : Float) {
+        if(passedPoint > 0.9) {gameData.ball.delta.x =7f; gameData.ball.delta.y=3f}
+        else if(passedPoint > 0.8) {gameData.ball.delta.x = 5.4f; gameData.ball.delta.y = 5.4f}
+        else if(passedPoint > 0.7) {gameData.ball.delta.x = 4.1f; gameData.ball.delta.y = 6.4f}
+        else if(passedPoint > 0.5) {gameData.ball.delta.x = 3f; gameData.ball.delta.y = 7f}
+        else if(passedPoint > 0.3) {gameData.ball.delta.x = -3f; gameData.ball.delta.y = 7f}
+        else if(passedPoint > 0.2) {gameData.ball.delta.x = -4.1f; gameData.ball.delta.y = 6.4f}
+        else if(passedPoint > 0.1) {gameData.ball.delta.x = -5.4f; gameData.ball.delta.y = 5.4f}
         else {gameData.ball.delta.x =-7f; gameData.ball.delta.y= 3f}
     }
 
@@ -201,7 +201,9 @@ class TestServerSocketThread (
                 when(obstacle.type){
                     // ball speed 변화
                     0, 1, 2 -> {
-
+                        gameData.ball.spped = 0.8f
+                        gameData.ball.spped = 1f
+                        gameData.ball.spped = 1.2f
                     }
                     // ball 크기 변화
                     3, 4, 5 -> {

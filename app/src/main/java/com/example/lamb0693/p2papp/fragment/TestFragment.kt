@@ -343,7 +343,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         testViewModel.gameState.observe(viewLifecycleOwner) {
             when(it) {
-                GameState.STOPPED -> buttonStart?.text = getString(R.string.start)
+                GameState.STOPPED -> {
+                    buttonStart?.text = getString(R.string.start)
+                    // network 연결 될 때 혹은 winner dialog 클릭 시 풀어 주어야 함
+                    buttonStart?.isEnabled = false
+                }
                 GameState.STARTED -> buttonStart?.text = getString(R.string.pause)
                 GameState.PAUSED  -> buttonStart?.text = getString(R.string.restart)
                 null -> return@observe
@@ -795,6 +799,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 }
             }
             testGameView.invalidate()
+            buttonStart?.isEnabled = true
         }
     }
 
@@ -812,6 +817,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 }
             }
             testGameView.invalidate()
+            buttonStart?.isEnabled = true
         }
     }
 

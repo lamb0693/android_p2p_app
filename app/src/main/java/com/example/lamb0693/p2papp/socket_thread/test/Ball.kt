@@ -17,13 +17,13 @@ class Ball {
     var spped : Float = 1f  // 0.8  1.2
 
     fun move() {
-        pos.x += delta.x
-        pos.y += delta.y
+        pos.x += delta.x * spped
+        pos.y += delta.y * spped
     }
 
     // 가상으로 이동한 좌표만 return
     fun testMove() : PointF{
-        return PointF(pos.x+delta.x, pos.y+delta.y)
+        return PointF(pos.x+ delta.x*spped, pos.y+delta.y*spped)
     }
 
     // bitmap 그릴때 그리기 시작하는 Point

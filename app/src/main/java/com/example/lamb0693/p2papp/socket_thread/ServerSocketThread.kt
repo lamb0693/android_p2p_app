@@ -133,7 +133,8 @@ open class ServerSocketThread(
         try{
             if (connectedSocket != null && connectedSocket?.isConnected == true) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    outputStream?.write(message.toByteArray())
+                    val messageWithLF = message + "\n"
+                    outputStream?.write(messageWithLF.toByteArray())
                 }
             }
         } catch(e:Exception) {
