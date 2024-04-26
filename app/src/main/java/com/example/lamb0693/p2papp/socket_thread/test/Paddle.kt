@@ -48,7 +48,7 @@ abstract class Paddle {
 
     // collision 한계를 -10 뭉 + 10pixel 넓게 잡음. 시각적 문제 교정
     fun isOnTheCollisionLine(ball : PointF, ballRadius : Float) : Boolean {
-        return ball.x > (x - ballRadius - paddleWidth/2f - 5) && ball.x < (x + paddleWidth/2f + ballRadius + 5)
+        return ball.x > (x -paddleWidth/2f - ballRadius - 10) && ball.x < (x + paddleWidth/2f + ballRadius + 10)
     }
 
     // -0.1 정도 에서 + 1.1 정도 까지 나올 듯 -: left  + : right

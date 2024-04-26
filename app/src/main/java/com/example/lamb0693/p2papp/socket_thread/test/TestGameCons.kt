@@ -23,11 +23,13 @@ object TestGameCons {
     const val CONTROLLER_NEUTRAL_WIDTH = 10f
 
     // 사용자 인풋 refresh interval
-    const val TOUCH_EVENT_INTERVAL = 100L
+    const val TOUCH_EVENT_INTERVAL = 80L
 
     const val SCORE_SIZE = 70
     const val PRINT_SCORE_BASELINE = 575
 
+    const val OBSTACLE_REGEN_INTERVAL = 15
     //effect 관련
+    const val EFFECT_DURATION = 200
     const val EFFECT_REMAIN_SIZE = 40
 }

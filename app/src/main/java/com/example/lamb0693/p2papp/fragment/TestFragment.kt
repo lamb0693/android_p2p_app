@@ -110,73 +110,58 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         private val paint: Paint = Paint()
 
-        private var backgroundBitmap : Bitmap
+        // 400 * 600 background
+        private var backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.background)
         private lateinit var offscreenBitmap: Bitmap
         private lateinit var offscreenCanvas: Canvas
         private lateinit var offscreenBitmapRect : Rect
 
-        private var bitmapControllerInactive : Bitmap
-        private var bitmapControllerNeutral : Bitmap
-        private var bitmapControllerLeft : Bitmap
-        private var bitmapControllerRight : Bitmap
+        //Controller(size of 75*60)
+        private var bitmapControllerServer = BitmapFactory.decodeResource(resources, R.drawable.controller_blue)
+        private var bitmapControllerClient = BitmapFactory.decodeResource(resources, R.drawable.controller_red)
+        private var bitmapControllerNeutral = BitmapFactory.decodeResource(resources, R.drawable.neutral)
+        private var bitmapControllerLeft = BitmapFactory.decodeResource(resources, R.drawable.left)
+        private var bitmapControllerRight = BitmapFactory.decodeResource(resources, R.drawable.right)
 
         // 0 normal 1 large 2 small
-        private var bitmapServerPaddle = BitmapFactory.decodeResource(resources, gameData.serverPaddle.imageResource)
-        private var bitmapScaledServerPaddle = arrayOf(
-            BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource),
-            BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource),
-            BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource)
+        private var bitmapServerPaddle = arrayOf(
+            BitmapFactory.decodeResource(resources, gameData.serverPaddle.imageResource),
+            BitmapFactory.decodeResource(resources, gameData.serverPaddle.imageResource),
+            BitmapFactory.decodeResource(resources, gameData.serverPaddle.imageResource)
         )
-        private var bitmapClientPaddle = BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource)
-        private var bitmapScaledClientPaddle = arrayOf(
+        private var bitmapClientPaddle = arrayOf(
             BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource),
             BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource),
             BitmapFactory.decodeResource(resources, gameData.clientPaddle.imageResource)
         )
 
-        private var bitmapScaledBall  = arrayOf(
+        private var bitmapBall  = arrayOf(
             BitmapFactory.decodeResource(resources, R.drawable.ball_3030),  //radius 10
             BitmapFactory.decodeResource(resources, R.drawable.ball_3030),  // radius 15
             BitmapFactory.decodeResource(resources, R.drawable.ball_3030),  // radius20
         )
 
         private var bitmapObstacles = arrayOf(
-            BitmapFactory.decodeResource(resources, R.drawable.ball_green),
-            BitmapFactory.decodeResource(resources, R.drawable.ball_brown),
-            BitmapFactory.decodeResource(resources, R.drawable.ball_purple),
-            BitmapFactory.decodeResource(resources, R.drawable.cube_cobalt),
-            BitmapFactory.decodeResource(resources, R.drawable.cube_green),
-            BitmapFactory.decodeResource(resources, R.drawable.cube_yellow),
-            BitmapFactory.decodeResource(resources, R.drawable.drug_pink),
-            BitmapFactory.decodeResource(resources, R.drawable.drug_purple),
-            BitmapFactory.decodeResource(resources, R.drawable.drug_red)
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle0),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle1),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle2),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle3),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle4),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle5),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle6),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle7),
+            BitmapFactory.decodeResource(resources, R.drawable.obstacle8)
         )
 
-        private var bitmapRemnant : Bitmap
+        private var bitmapRemnant = BitmapFactory.decodeResource(resources, R.drawable.remant)
 
         var isUsingStick = false
         var isDraggingRight = false
         var isDraggingLeft = false
-
-        var scaledControllerRect = RectF()
+        val controllerRect = RectF()
 
         private var scaleX: Float = 1.0f
         private var scaleY: Float = 1.0f
-
-        init {
-            paint.color = Color.BLUE // Change color as needed
-            paint.style = Paint.Style.FILL
-
-            //400X600 image
-            backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.background)
-            //Controller(size of 75*60)
-            bitmapControllerInactive = BitmapFactory.decodeResource(resources, R.drawable.neutral_inactive)
-            bitmapControllerNeutral = BitmapFactory.decodeResource(resources, R.drawable.neutral)
-            bitmapControllerLeft = BitmapFactory.decodeResource(resources, R.drawable.left)
-            bitmapControllerRight = BitmapFactory.decodeResource(resources, R.drawable.right)
-
-            bitmapRemnant = BitmapFactory.decodeResource(resources, R.drawable.remant)
-        }
 
         /*****************************
          * onSizeChanged  - bitmap 및 offScreenBitmp을 resize
@@ -190,12 +175,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             scaleX = w.toFloat() / TestGameCons.BITMAP_WIDTH // DESIRED_WIDTH is the width you want your game graphics to be
             scaleY = h.toFloat() / TestGameCons.BITMAP_HEIGHT // DESIRED_HEIGHT is the height you want your game graphics to be
 
-            // Determine the scaled bitmap dimensions
-            val scaledWidth = (TestGameCons.BITMAP_WIDTH * scaleX).toInt()
-            val scaledHeight = (TestGameCons.BITMAP_HEIGHT * scaleY).toInt()
+            backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmap, w, h,true)
 
             // resize bitmaps of Controller
-            bitmapControllerInactive = Bitmap.createScaledBitmap(bitmapControllerInactive,
+            controllerRect.left = TestGameCons.CONTROLLER_RECT.left * scaleX
+            controllerRect.top = TestGameCons.CONTROLLER_RECT.top * scaleY
+            controllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
+            controllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
+
+            bitmapControllerServer = Bitmap.createScaledBitmap(bitmapControllerServer,
+                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+            bitmapControllerClient = Bitmap.createScaledBitmap(bitmapControllerClient,
                 (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
                 (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
             bitmapControllerNeutral = Bitmap.createScaledBitmap(bitmapControllerNeutral,
@@ -211,43 +202,41 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             bitmapRemnant = Bitmap.createScaledBitmap(bitmapRemnant,
                 (60*scaleX).toInt(), (60*scaleY).toInt(), true)
 
-            // Determine the scaledControllerRect = stick 이 위치할 장소
-            scaledControllerRect.left = TestGameCons.CONTROLLER_RECT.left * scaleX
-            scaledControllerRect.top = TestGameCons.CONTROLLER_RECT.top * scaleY
-            scaledControllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
-            scaledControllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
-
             // paddle bitmap resize  0 normla, 1 large  2 small
-            Log.i(">>>>", "scaleX at the time of bitamp Scaling : ${scaleX}")
-            bitmapScaledServerPaddle[0] = Bitmap.createScaledBitmap(bitmapServerPaddle,
+            bitmapServerPaddle[0] = Bitmap.createScaledBitmap(bitmapServerPaddle[0],
                 (80*scaleX).toInt(), (20*scaleY).toInt(), true)
-            bitmapScaledServerPaddle[1] = Bitmap.createScaledBitmap(bitmapServerPaddle,
+            bitmapClientPaddle[0] = Bitmap.createScaledBitmap(bitmapClientPaddle[0],
+                (80*scaleX).toInt(), (20*scaleY).toInt(), true)
+            bitmapServerPaddle[1] = Bitmap.createScaledBitmap(bitmapServerPaddle[1],
                 (100*scaleX).toInt(), (20*scaleY).toInt(), true)
-            bitmapScaledServerPaddle[2] = Bitmap.createScaledBitmap(bitmapServerPaddle,
+            bitmapClientPaddle[1] = Bitmap.createScaledBitmap(bitmapClientPaddle[1],
+                (100*scaleX).toInt(), (20*scaleY).toInt(), true)
+            bitmapServerPaddle[2] = Bitmap.createScaledBitmap(bitmapServerPaddle[2],
                 (60*scaleX).toInt(), (20*scaleY).toInt(), true)
-            bitmapScaledClientPaddle[0] = Bitmap.createScaledBitmap(bitmapClientPaddle,
-                (80*scaleX).toInt(), (20*scaleY).toInt(), true)
-            bitmapScaledClientPaddle[1] = Bitmap.createScaledBitmap(bitmapClientPaddle,
-                (100*scaleX).toInt(), (20*scaleY).toInt(), true)
-            bitmapScaledClientPaddle[2] = Bitmap.createScaledBitmap(bitmapClientPaddle,
+            bitmapClientPaddle[2] = Bitmap.createScaledBitmap(bitmapClientPaddle[2],
                 (60*scaleX).toInt(), (20*scaleY).toInt(), true)
 
-            // scaled ball bitmap 을 만든다
-            bitmapScaledBall[0] = Bitmap.createScaledBitmap(bitmapScaledBall[0],
-                (20*scaleX).toInt(), (20*scaleY).toInt(), true)
-            bitmapScaledBall[1] = Bitmap.createScaledBitmap(bitmapScaledBall[1],
-                (30*scaleX).toInt(), (30*scaleY).toInt(), true)
-            bitmapScaledBall[2] = Bitmap.createScaledBitmap(bitmapScaledBall[2],
-                (40*scaleX).toInt(), (40*scaleY).toInt(), true)
+
+            //  resize bitmap for obstacle
+            for( index in 0..8) {
+                bitmapObstacles[index] = Bitmap.createScaledBitmap(bitmapObstacles[index],
+                    (30*scaleX).toInt(), (30*scaleY).toInt(), true )
+            }
+
+            // scaled ball bitmap 을 만든다 20, 30, 40
+            for(index in 0..2 ) {
+                bitmapBall[index] = Bitmap.createScaledBitmap(bitmapBall[index],
+                    ( (20+10*index)*scaleX).toInt(), ( (20+10*index)*scaleY).toInt(), true)
+            }
 
             // Initialize the offscreen bitmap and canvas with scaled dimensions
-            offscreenBitmap = Bitmap.createBitmap(scaledWidth, scaledHeight, Bitmap.Config.ARGB_8888)
+            offscreenBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             offscreenBitmapRect = Rect(0, 0, offscreenBitmap.width, offscreenBitmap.height )
             offscreenCanvas = Canvas(offscreenBitmap)
         }
 
         private fun drawGame(canvas : Canvas){
-            canvas.drawBitmap(backgroundBitmap, null, RectF(0f, 0f, width.toFloat(), height.toFloat()), null)
+            canvas.drawBitmap(backgroundBitmap, 0f, 0f, paint)
             drawObstacleAndRemnant(canvas)
             drawPaddleAndBall(canvas)
             drawScore(canvas)
@@ -257,7 +246,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         private fun drawObstacleAndRemnant(canvas: Canvas){
             gameData.obstacles.forEach{
-                canvas.drawBitmap(bitmapObstacles[it.type], null, it.getScaledRect(scaleX, scaleY), paint )
+                val drawPoint = it.getScaledDrawingPoint(scaleX, scaleY)
+                canvas.drawBitmap(bitmapObstacles[it.type], drawPoint.x, drawPoint.y, paint )
             }
             gameData.obstacleRemnant?.let{
                 canvas.drawBitmap(bitmapRemnant, (it.x-30)*scaleX, (it.y-30)*scaleY ,paint )
@@ -265,26 +255,28 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             }
         }
         private fun drawController(canvas : Canvas){
-            if(!isUsingStick) canvas.drawBitmap(bitmapControllerInactive,
-                scaledControllerRect.left, scaledControllerRect.top, paint)
+            if(!isUsingStick) {
+                (context as MainActivity).asServer?.let {
+                    if (it) canvas.drawBitmap(bitmapControllerServer, controllerRect.left, controllerRect.top, paint)
+                    else canvas.drawBitmap(bitmapControllerClient, controllerRect.left, controllerRect.top, paint)
+                }
+            }
             else if(!isDraggingRight && !isDraggingLeft) canvas.drawBitmap(
-                bitmapControllerNeutral, scaledControllerRect.left, scaledControllerRect.top, paint)
-            else if(isDraggingRight) canvas.drawBitmap(
-                bitmapControllerRight, scaledControllerRect.left, scaledControllerRect.top, paint)
-            else canvas.drawBitmap(bitmapControllerLeft,
-                scaledControllerRect.left, scaledControllerRect.top, paint)
+                bitmapControllerNeutral, controllerRect.left, controllerRect.top, paint)
+            else if(isDraggingRight) canvas.drawBitmap(bitmapControllerRight, controllerRect.left, controllerRect.top, paint)
+            else canvas.drawBitmap(bitmapControllerLeft, controllerRect.left, controllerRect.top, paint)
         }
         private fun drawPaddleAndBall(canvas : Canvas){
             // draw Paddle and ball
             var drawingPoint = gameData.serverPaddle.getDrawingPoint(scaleX,scaleY)
-            canvas.drawBitmap(bitmapScaledServerPaddle[gameData.serverPaddle.getPaddleState()]
+            canvas.drawBitmap(bitmapServerPaddle[gameData.serverPaddle.getPaddleState()]
                 , drawingPoint.x, drawingPoint.y, paint)
             drawingPoint = gameData.clientPaddle.getDrawingPoint(scaleX, scaleY)
-            canvas.drawBitmap(bitmapScaledClientPaddle[gameData.clientPaddle.getPaddleState()]
+            canvas.drawBitmap(bitmapClientPaddle[gameData.clientPaddle.getPaddleState()]
                 , drawingPoint.x, drawingPoint.y, paint)
 
             val ballDrawingPoint = gameData.ball.getDrawPoint(scaleX, scaleY)
-            canvas.drawBitmap(bitmapScaledBall[gameData.ball.getSize()], ballDrawingPoint.x, ballDrawingPoint.y, paint)
+            canvas.drawBitmap(bitmapBall[gameData.ball.getSize()], ballDrawingPoint.x, ballDrawingPoint.y, paint)
             Log.i(">>>>", "paddleState : ${gameData.serverPaddle.getPaddleState()}. ${gameData.clientPaddle.getPaddleState()}")
         }
         private fun drawScore(canvas : Canvas){
@@ -437,7 +429,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     // Check if touch is inside the controller area
-                    if (testGameView.scaledControllerRect.contains(event.x, event.y)) {
+                    if (testGameView.controllerRect.contains(event.x, event.y)) {
                         testGameView.isUsingStick = true
                         startStickX = event.x
                         currentPosition.x = event.x

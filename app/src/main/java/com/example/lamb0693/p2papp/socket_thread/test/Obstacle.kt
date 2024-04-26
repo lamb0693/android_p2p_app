@@ -43,6 +43,10 @@ class Obstacle {
             (curPosX+15)*scaleX, (row*50f + 100 +15)*scaleY)
     }
 
+    fun getScaledDrawingPoint(scaleX : Float, scaleY : Float) : PointF {
+        return  PointF(  (curPosX-15)* scaleX, (row*50f + 100 -15)*scaleY )
+    }
+
     fun getUpperBorderY() : Float {
         return (row*50f + 100 -15)
     }

@@ -18,7 +18,6 @@ class TestServerSocketThread (
     private var gameData = TestGameData()
 
     private var count : Int = 0
-    private val obstacleGenerationInterval = 20
 
     override fun proceedGame() {
         super.proceedGame()
@@ -103,7 +102,7 @@ class TestServerSocketThread (
         }
 
         // obstacle 생성
-        if( count%obstacleGenerationInterval == 0) {
+        if( count%TestGameCons.OBSTACLE_REGEN_INTERVAL == 0) {
             gameData.obstacles.add(Obstacle())
         }
     }
@@ -202,8 +201,8 @@ class TestServerSocketThread (
                     // ball speed 변화
                     0, 1, 2 -> {
                         gameData.ball.spped = 0.8f
-                        gameData.ball.spped = 1f
-                        gameData.ball.spped = 1.2f
+                        gameData.ball.spped = 1.1f
+                        gameData.ball.spped = 1.4f
                     }
                     // ball 크기 변화
                     3, 4, 5 -> {
@@ -214,6 +213,10 @@ class TestServerSocketThread (
                         gameData.effectServer = null
                         gameData.effectRemainServer = 0
                         gameData.effectRemainClient = 0
+                        gameData.isServerPlaying?.let{
+                            if(it) gameData.serverPaddle.setPaddleState(0)
+                            else gameData.clientPaddle.setPaddleState(0)
+                        }
                     }
                     // paddle size 변화
                     7 ,8 -> {
@@ -221,12 +224,12 @@ class TestServerSocketThread (
                             if(it) {
                                 Log.i(">>>>", "collision, isSeverPalying = true set server Paddle to 1")
                                 gameData.effectServer = obstacle.type
-                                gameData.effectRemainServer= 100
+                                gameData.effectRemainServer= TestGameCons.EFFECT_DURATION
                                 gameData.serverPaddle.setPaddleState(obstacle.type - 6)
                             }else {
                                 Log.i(">>>>", "collision, isSeverPalying = false set client Paddle to 1")
                                 gameData.effectClient = obstacle.type
-                                gameData.effectRemainClient= 100
+                                gameData.effectRemainClient= TestGameCons.EFFECT_DURATION
                                 gameData.clientPaddle.setPaddleState(obstacle.type - 6)
                             }
                         }
