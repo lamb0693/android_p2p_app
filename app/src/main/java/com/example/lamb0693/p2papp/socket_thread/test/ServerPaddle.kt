@@ -19,7 +19,7 @@ class ServerPaddle : Paddle() {
         // passed downward? 볼 엉덩이가 선을 지나갔는 지
         if(ball.pos.y + ball.radius >= collisionBorder ) return false // 출발점이 접촉면이면 pass가 안됨
         if(currentPoint.y + ball.radius <  collisionBorder ) return false  // 밖에서 출발 접촉선에 물리면 pass로 판정
-        Log.i(">>>>", "prev ballX, ballY, $ball")
+        Log.i(">>>>", "prev ballX, ballY, $ball.pos")
         Log.i(">>>>", "temp ball $currentPoint")
         Log.i(">>>>", "passed through Line")
         return true
@@ -30,11 +30,11 @@ class ServerPaddle : Paddle() {
     // 돌아 나온 부분의 비율을 return 함
     override fun moveBackToCollisionBorder(ball : Ball, currentPoint : PointF): Float {
         //Log.i(">>>>", "moveBack")
-        //Log.i(">>>>", "delta ${gameData.ballMoveX}, ${gameData.ballMoveY}")
+        Log.i(">>>>", "ball delta info ${ball.delta}")
         val ballLower = currentPoint.y + ball.radius
-        //Log.i(">>>>", "ballLower $ballLower")
+        Log.i(">>>>", "ballLower $ballLower")
         val toMoveY = ballLower - collisionBorder // 양수, 원래 방향
-        //Log.i(">>>>", "toMoveY $toMoveY")
+        Log.i(">>>>", "toMoveY $toMoveY")
         val fractionProceeded = abs(toMoveY/ball.delta.y)
         val toMoveX = ball.delta.x * fractionProceeded // 원래 방향, currentMove 와 같은 바얗ㅇ
         //Log.i(">>>>", "toMoveX $toMoveX")

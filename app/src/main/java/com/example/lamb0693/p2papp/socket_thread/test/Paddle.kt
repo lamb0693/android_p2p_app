@@ -1,6 +1,7 @@
 package com.example.lamb0693.p2papp.socket_thread.test
 
 import android.graphics.PointF
+import android.util.Log
 
 abstract class Paddle {
     var y : Float = 0f // 상속 class 에서 재정의
@@ -47,14 +48,29 @@ abstract class Paddle {
     abstract fun moveBackToCollisionBorder(ball : Ball, currentPoint : PointF) : Float
 
     // collision 한계를 -10 뭉 + 10pixel 넓게 잡음. 시각적 문제 교정
-    fun isOnTheCollisionLine(ball : PointF, ballRadius : Float) : Boolean {
-        return ball.x > (x -paddleWidth/2f - ballRadius - 10) && ball.x < (x + paddleWidth/2f + ballRadius + 10)
+    fun isOnTheCollisionLine(checkPoint : PointF, ballRadius : Float) : Boolean {
+        Log.i(">>>>", "isOnTheCollisionLine checkPoint $checkPoint")
+        Log.i(">>>>", "isOnTheCollisionLine paddle  ${x-paddleWidth/2f}-${x+paddleWidth/2f}")
+        return (checkPoint.x + ballRadius) > (x -paddleWidth/2f)
+                && (checkPoint.x -ballRadius < (x + paddleWidth/2f) )
     }
 
     // -0.1 정도 에서 + 1.1 정도 까지 나올 듯 -: left  + : right
     fun getPointOfCollisionLine(curX : Float) : Float{
+        Log.i(">>>>", "isOnTheCollisionLine checkPoint $curX")
+        Log.i(">>>>", "isOnTheCollisionLine paddle  ${x-paddleWidth/2f}-${x+paddleWidth/2f}")
+        Log.i(">>>>", "isOnTheCollisionLine collided portion ${( curX - (x-paddleWidth/2f) )/paddleWidth }")
         return ( curX - (x-paddleWidth/2f) )/paddleWidth
     }
+
+    fun getStartX() : Float {
+        return x - paddleWidth/2f
+    }
+
+    fun getEndX() : Float {
+        return x + paddleWidth/2f
+    }
+
     open fun resetPaddle() {
         x= 200f
         setPaddleState(0)

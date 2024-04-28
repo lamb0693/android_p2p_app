@@ -308,12 +308,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
 
     override fun onConnectSessionButtonClicked(roomName : String) {
         if(asServer == null || roomName.isEmpty()) {
-            SimpleConfirmDialog(this, "알림", "먼저 역할과 방이름을 설정하세요").showDialog()
+            SimpleConfirmDialog(this, R.string.allim, R.string.set_role_name_first).showDialog()
             return
         }
 
         if (!roomName.matches("[a-zA-Z][a-zA-Z0-9]*".toRegex())) {
-            SimpleConfirmDialog(this, "알림", "방 이름은 영문자로 시작하고, 영문자와 숫자로만 이루어져야 합니다").showDialog()
+            SimpleConfirmDialog(this, R.string.allim, R.string.roomname_prerequsite).showDialog()
             return
         }
 
@@ -341,7 +341,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
     override fun onGame1ButtonClicked() {
         if(isSocketConnectionPossible()) {
             if(!asServer!!) {
-                SimpleConfirmDialog(this, getString(R.string.notification),getString(R.string.condtion_open_room)).showDialog()
+                SimpleConfirmDialog(this, R.string.allim ,R.string.condtion_open_room).showDialog()
                 return
             }
             TestFragment.newInstance("val1", "val2").apply {
@@ -396,9 +396,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
     // refuse하면 server에게 refuse message를 보냄
     private fun showInvitationAlertDialog() {
         val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
-        alertDialogBuilder.setTitle("Invitation")
-        alertDialogBuilder.setMessage("You have received an invitation. Do you accept?")
-        alertDialogBuilder.setPositiveButton("Accept") { dialogInterface, _ ->
+        alertDialogBuilder.setTitle(R.string.invitaion)
+        alertDialogBuilder.setMessage(R.string.invitaion_message)
+        alertDialogBuilder.setPositiveButton(R.string.accept) { dialogInterface, _ ->
             dialogInterface.dismiss()
             // Handle invitation acceptance here
             // For example, start the TestFragment
@@ -407,7 +407,7 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                 onChangeFragment(this, "TestFragment")
             }
         }
-        alertDialogBuilder.setNegativeButton("Decline") { dialogInterface, _ ->
+        alertDialogBuilder.setNegativeButton(R.string.decline) { dialogInterface, _ ->
             dialogInterface.dismiss()
             // server에 refuse message 보냄
             sendMessageViaSession("REFUSE_INVITATION")
@@ -422,12 +422,12 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         // Create a confirmation dialog
         AlertDialog.Builder(this)
             .setTitle("Exit")
-            .setMessage("Are you sure you want to exit?")
-            .setPositiveButton("Yes") { _, _ ->
+            .setMessage(R.string.confirm_exit)
+            .setPositiveButton(R.string.yes) { _, _ ->
                 // Call finish() to exit the app
                 super.onBackPressed()
             }
-            .setNegativeButton("No", null)
+            .setNegativeButton(R.string.no, null)
             .show()
     }
 

@@ -18,4 +18,22 @@
     <string name="notification">Notification</string>
     <string name="condtion_open_room">You must be server to make room</string>
     <string name="wifiaware_first">Connect Wifi Network first</string>
+    <string name="image_button_to_home">imageButtonToHOme</string>
+    <string name="return_home_fragment">Are you sure you want to go main page?</string>
+    <string name="win">win</string>
+    <string name="win_message">You won the game</string>
+    <string name="connection_lost_message">\"Connection Lost, Return to Home\"</string>
+    <string name="lose">lose</string>
+    <string name="lose_message">you lost the game</string>
+    <string name="allim">alert</string>
+    <string name="set_role_name_first">Set role and room name first</string>
+    <string name="roomname_prerequsite">Room name must be consist of alphanumeric and started with alphabet</string>
+    <string name="invitaion">Invitation</string>
+    <string name="invitaion_message">You have received an invitation. Do you accept?</string>
+    <string name="accept">Accept</string>
+    <string name="decline">Decline</string>
+    <string name="confirm_exit">Are you sure you want to exit?</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+
 </resources>

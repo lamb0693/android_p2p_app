@@ -6,7 +6,6 @@ object TestGameCons {
     const val BAR_NORMAL = 0
     const val BAR_LARGE = 1
     const val BAR_SMALL = 2
-    //const val BAR_HEIGHT : Float = 16.0F
 
     // 화면 refreshing interval
     const val TEST_GAME_INTERVAL = 100L

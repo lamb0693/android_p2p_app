@@ -1,5 +1,6 @@
 package com.example.lamb0693.p2papp.fragment
 
+import android.app.AlertDialog
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -25,6 +26,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.annotation.RequiresApi
@@ -75,7 +77,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     private lateinit var testGameView: TestGameView
 
     private var buttonStart : Button?= null
-    private var buttonToHome : Button? = null
+    private var buttonToHome : ImageButton? = null
 
     lateinit var mainActivity : MainActivity
 
@@ -349,7 +351,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     // Fragment의 Button 초기화 및 설정
     private fun initTestViewButtonAndListener(){
-        buttonToHome = testView.findViewById<Button>(R.id.buttonToHomeFromTest)
+        buttonToHome = testView.findViewById<ImageButton>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
 
         buttonStart = testView.findViewById<Button>(R.id.buttonStartTestGame)
@@ -357,14 +359,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         buttonStart?.isEnabled = false
 
         buttonToHome?.setOnClickListener{
-            if(testViewModel.socketConnected.value == true){
-                if(mainActivity.asServer!!) serverSocketThread?.quitServerThread()
-                else clientSocketThread?.onQuitMessageFromFragment()
-            } else{
-                homeFragment?.let { fragment ->
-                    fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
-                }
-            }
+            showConfirmationDialogForButtonToHome()
         }
 
         // button click 하면 sever에 message 보내기만,  ui 처리는 server에서 돌아오면 한다.
@@ -379,6 +374,31 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             } else if(testViewModel.gameState.value == GameState.PAUSED) {
                 if (mainActivity.asServer!!) serverSocketThread?.setPauseGameRoutine(false)
                 else clientSocketThread?.onMessageFromClientToServer("CLIENT_RESTART_GAME")
+            }
+        }
+    }
+
+    private fun showConfirmationDialogForButtonToHome() {
+        AlertDialog.Builder(context)
+            .setMessage(R.string.return_home_fragment) //"Are you sure you want to go main page?")
+            .setPositiveButton("Yes") { dialog, _ ->
+                dialog.dismiss()
+                navigateToHome()
+            }
+            .setNegativeButton("No") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(false) // Disallows dismiss by clicking outside
+            .show()
+    }
+
+    private fun navigateToHome() {
+        if(testViewModel.socketConnected.value == true){
+            if(mainActivity.asServer!!) serverSocketThread?.quitServerThread()
+            else clientSocketThread?.onQuitMessageFromFragment()
+        } else{
+            homeFragment?.let { fragment ->
+                fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
             }
         }
     }
@@ -677,8 +697,8 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         Log.i(">>>>", "from thread : terminating")
         mainActivity.runOnUiThread {
             testViewModel.setSocketConnected(false)
-            SimpleConfirmDialog(mainActivity, "알림",
-                "Connection Lost, Return to Home").showDialog()
+            SimpleConfirmDialog(mainActivity, R.string.allim,
+                R.string.connection_lost_message).showDialog()
 
             homeFragment?.let { fragment ->
                 fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
@@ -783,11 +803,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 if(isServerWin) {
                     testGameView.serverWin ++
                     SimpleConfirmDialog(mainActivity,
-                        "win", "You won this game").showDialog()
+                        R.string.win, R.string.win_message).showDialog()
                 } else {
                     testGameView.clientWin ++
                     SimpleConfirmDialog(mainActivity,
-                        "lose", "You lost this game").showDialog()
+                        R.string.lose, R.string.lose_message).showDialog()
                 }
             }
             testGameView.invalidate()
@@ -801,11 +821,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 if(!isServerWin) {
                     testGameView.clientWin ++
                     SimpleConfirmDialog(mainActivity,
-                        "win", "You won this game").showDialog()
+                        R.string.win, R.string.win_message).showDialog()
                 } else {
                     testGameView.serverWin++
                     SimpleConfirmDialog(mainActivity,
-                        "lose", "You lost this game").showDialog()
+                        R.string.lose, R.string.lose_message).showDialog()
                 }
             }
             testGameView.invalidate()
