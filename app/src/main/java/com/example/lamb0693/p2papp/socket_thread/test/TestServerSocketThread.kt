@@ -79,23 +79,20 @@ class TestServerSocketThread (
         // effectServer ,effectClient 가 있으면 obstacle count 진행
         // 1보다 크면 0을 만들고, 뺀 결과 0이면 effect를 없앤다
         gameData.effectServer?.let{
-            if(gameData.effectRemainServer > 0) {
-                gameData.effectRemainServer--
-                if(gameData.effectRemainServer ==0){
-                    Log.i(">>>>", "timeout, set server paddle status to 0")
-                    gameData.serverPaddle.setPaddleState(0)
-                    gameData.effectServer = null
-                }
+            if(gameData.effectRemainServer > 0) gameData.effectRemainServer--
+            if(gameData.effectRemainServer == 0){
+                Log.i("proceedGame", "timeout, set server paddle status to 0")
+                gameData.serverPaddle.setPaddleState(0)
+                gameData.effectServer = null
             }
         }
         gameData.effectClient?.let{
-            if(gameData.effectRemainClient > 0){
-                gameData.effectRemainClient--
-                if(gameData.effectRemainClient ==0){
-                    Log.i(">>>>", "timeout, set server paddle status to 0")
-                    gameData.clientPaddle.setPaddleState(0)
-                    gameData.effectClient = null
-                }
+            if(gameData.effectRemainClient > 0)  gameData.effectRemainClient--
+            // frame 빠짐 대비
+            if(gameData.effectRemainClient ==0){
+                Log.i("proceedGame", "timeout, set client paddle status to 0")
+                gameData.clientPaddle.setPaddleState(0)
+                gameData.effectClient = null
             }
         }
 
@@ -107,12 +104,12 @@ class TestServerSocketThread (
 
     private fun processCollideWithServerPaddle(tempPoint: PointF){
         synchronized(gameData.serverPaddle){
-            Log.i(">>>>", "executing processCollideWithServerPaddle")
+            Log.i("processCollideWithServerPaddle", "executing processCollideWithServerPaddle")
 
             // y 좌표가 collision line 을 통과 햇는지 확인
             if(! gameData.serverPaddle.passCollisionBorder(gameData.ball, tempPoint) ) return
             val savedTempPoint = PointF(tempPoint.x, tempPoint.y) // 원래 이동 해야 할 위치 저장
-            Log.i(">>>>", "server paddle 충돌면 지나감")
+            Log.i("processCollideWithServerPaddle", "server paddle 충돌면 지나감")
 
             // ball 을 충돌 line 으로 옮김
             val fraction = gameData.serverPaddle.moveBackToCollisionBorder(gameData.ball, tempPoint)
@@ -120,10 +117,10 @@ class TestServerSocketThread (
             // 현재 tempPoint 는 충돌선 으로 이동 상태
             if(gameData.serverPaddle.isOnTheCollisionLine(tempPoint, gameData.ball.radius + 15)) {
                 //back
-                Log.i(">>>>", "Line 안이라 반사 처리")
+                Log.i("processCollideWithServerPaddle", "Line 안이라 반사 처리")
                 gameData.isServerPlaying = true // server 가 play 한 것으로 처리
                 val passedPoint = gameData.serverPaddle.getPointOfCollisionLine(tempPoint.x)
-                Log.i(">>>>", "Paddle 의 $passedPoint 부분에 부딛힘")
+                Log.i("processCollideWithServerPaddle", "Paddle 의 $passedPoint 부분에 부딛힘")
                 resetServerDelta(passedPoint) // delta 가 변한다
                 // 물러선 fraction 만큼 진행
                 tempPoint.x += fraction * gameData.ball.delta.x * gameData.ball.spped
@@ -154,12 +151,12 @@ class TestServerSocketThread (
 
     private fun processCollideWithClientPaddle(tempPoint: PointF) {
         synchronized(gameData.clientPaddle) {
-            Log.i(">>>>", "executing processCollideWithClientPaddle")
+            Log.i("processCollideWithClientPaddle", "executing processCollideWithClientPaddle")
 
             // y 좌표가 collision line 을 통과 햇는지 확인
             if(! gameData.clientPaddle.passCollisionBorder(gameData.ball, tempPoint) ) return
             val savedTempPoint = PointF(tempPoint.x, tempPoint.y) // 원래 이동 해야 할 위치 저장
-            Log.i(">>>>", "client paddle 충돌면 지나감")
+            Log.i("processCollideWithClientPaddle", "client paddle 충돌면 지나감")
 
             // ball 을 충돌 line 으로 옮김
             val fraction = gameData.clientPaddle.moveBackToCollisionBorder(gameData.ball, tempPoint)
@@ -167,10 +164,10 @@ class TestServerSocketThread (
             // 현재 tempPoint 는 충돌선 으로 이동 상태
             if(gameData.clientPaddle.isOnTheCollisionLine(tempPoint, gameData.ball.radius + 15)) {
                 //back
-                Log.i(">>>>", "Line 안이라 반사 처리")
+                Log.i("processCollideWithClientPaddle", "Line 안이라 반사 처리")
                 gameData.isServerPlaying = false // client 가 play 한 것으로 처리
                 val passedPoint = gameData.clientPaddle.getPointOfCollisionLine(tempPoint.x)
-                Log.i(">>>>", "client Paddle 의 $passedPoint 부분에 부딛힘")
+                Log.i("processCollideWithClientPaddle", "client Paddle 의 $passedPoint 부분에 부딛힘")
                 resetClientDelta(passedPoint) // delta 가 변한다
                 // 물러선 fraction 만큼 진행
                 tempPoint.x += fraction * gameData.ball.delta.x * gameData.ball.spped
@@ -209,18 +206,16 @@ class TestServerSocketThread (
                 obstacle.getRect().bottom + gameData.ball.radius,
             )
             if (checkRect.contains(tempPoint.x, tempPoint.y)) {
-                Log.i(">>>>", "collide with obstacle")
+                Log.i("processCollideWithObstacle", "collide with obstacle ${obstacle.type} at $tempPoint")
                 // obstacle effect 설정
                 when(obstacle.type){
                     // ball speed 변화
-                    0, 1, 2 -> {
-                        gameData.ball.spped = 0.8f
-                        gameData.ball.spped = 1.1f
-                        gameData.ball.spped = 1.4f
-                    }
+                    0 -> gameData.ball.spped = TestGameCons.BALL_SPEED_LOW
+                    1 -> gameData.ball.spped = TestGameCons.BALL_SPEED_NORMAL
+                    2 -> gameData.ball.spped = TestGameCons.BALL_SPEED_HIGH
                     // ball 크기 변화
                     3, 4, 5 -> {
-                        gameData.ball.setSize(obstacle.type -3)
+                        gameData.ball.setSizeIndex(obstacle.type -3)
                     }
                     // paddle 정상화
                     6 -> {
@@ -234,14 +229,15 @@ class TestServerSocketThread (
                     }
                     // paddle size 변화
                     7 ,8 -> {
+                        //7-6=1 large paddle,  8-6=2 small paddle
                         gameData.isServerPlaying?.let{
                             if(it) {
-                                Log.i(">>>>", "collision, isSeverPalying = true set server Paddle to 1")
+                                Log.i("processCollideWithObstacle", "collision, isSeverPalying = true set server Paddle to 1")
                                 gameData.effectServer = obstacle.type
                                 gameData.effectRemainServer= TestGameCons.EFFECT_DURATION
                                 gameData.serverPaddle.setPaddleState(obstacle.type - 6)
                             }else {
-                                Log.i(">>>>", "collision, isSeverPalying = false set client Paddle to 1")
+                                Log.i("processCollideWithObstacle", "collision, isSeverPalying = false set client Paddle to 1")
                                 gameData.effectClient = obstacle.type
                                 gameData.effectRemainClient= TestGameCons.EFFECT_DURATION
                                 gameData.clientPaddle.setPaddleState(obstacle.type - 6)
@@ -249,12 +245,19 @@ class TestServerSocketThread (
                         }
                     }
                     else -> {
-                        Log.e(">>>>", "ball type ${obstacle.type} not exist")
+                        Log.e("processCollideWithObstacle", "ball type ${obstacle.type} not exist")
                     }
                 }
 
                 // 반대 방향으로 진행 설정
-                gameData.ball.delta.y *= -1
+                // 지났으면 옆으로 아니면 아래위로
+                if(gameData.ball.delta.y >0  && tempPoint.y>obstacle.row*50+100
+                    || gameData.ball.delta.y < 0  && tempPoint.y<obstacle.row*50+100) {
+                    gameData.ball.delta.x *= -1
+                } else {
+                    gameData.ball.delta.y *= -1
+                }
+
                 // 충돌한 것은 remove 후 for loop 에서 나감
                 gameData.obstacles.removeAt(indexOfObstacle)
                 gameData.obstacleRemnant = obstacle.getCurrentLocation() //display 후 null로
@@ -264,7 +267,7 @@ class TestServerSocketThread (
     }
 
     override fun processGameDataInServer(strAction : String, manualRedraw : Boolean) {
-        Log.i(">>>>", "processGameDataInServer() $strAction")
+        Log.i("processGameDataInServer", "processGameDataInServer() $strAction")
 
         if(isPaused) return
 
@@ -278,7 +281,7 @@ class TestServerSocketThread (
             }
             if(manualRedraw) sendGameDataToFragments()
         } else {
-            Log.e(">>>>", "processGameDataInServer error in String. $strAction")
+            Log.e("processGameDataInServer", "processGameDataInServer error in String. $strAction")
         }
     }
 

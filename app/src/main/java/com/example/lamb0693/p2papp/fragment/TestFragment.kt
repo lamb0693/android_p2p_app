@@ -242,13 +242,14 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             drawObstacleAndRemnant(canvas)
             drawPaddleAndBall(canvas)
             drawScore(canvas)
-            drawWEffect(canvas)
+            drawEffect(canvas)
             drawController(canvas)
         }
 
         private fun drawObstacleAndRemnant(canvas: Canvas){
             gameData.obstacles.forEach{
                 val drawPoint = it.getScaledDrawingPoint(scaleX, scaleY)
+                if(it.type ==8) Log.i(">>>>", "obstacle type 8")
                 canvas.drawBitmap(bitmapObstacles[it.type], drawPoint.x, drawPoint.y, paint )
             }
             gameData.obstacleRemnant?.let{
@@ -278,7 +279,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 , drawingPoint.x, drawingPoint.y, paint)
 
             val ballDrawingPoint = gameData.ball.getDrawPoint(scaleX, scaleY)
-            canvas.drawBitmap(bitmapBall[gameData.ball.getSize()], ballDrawingPoint.x, ballDrawingPoint.y, paint)
+            canvas.drawBitmap(bitmapBall[gameData.ball.getSizeIndex()], ballDrawingPoint.x, ballDrawingPoint.y, paint)
             Log.i(">>>>", "paddleState : ${gameData.serverPaddle.getPaddleState()}. ${gameData.clientPaddle.getPaddleState()}")
         }
         private fun drawScore(canvas : Canvas){
@@ -292,18 +293,45 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             paint.textSize = TestGameCons.SCORE_SIZE * scaleX
             canvas.drawText("$clientWin", clientScoreX, scoreY, paint)
         }
-        private fun drawWEffect(canvas : Canvas) {
-            gameData.effectServer?.let{
-                paint.color = Color.BLUE
-                paint.textSize = TestGameCons.EFFECT_REMAIN_SIZE * scaleX
-                canvas.drawText("${gameData.effectRemainServer}", 120f*scaleX, 580f*scaleY, paint)
-                canvas.drawBitmap(bitmapObstacles[it], 120f*scaleX, 510f*scaleY, paint)
+        private fun drawEffect(canvas : Canvas) {
+            paint.textSize = TestGameCons.EFFECT_REMAIN_SIZE * scaleX
+            val main = (context as MainActivity)
+
+            gameData.effectServer?.let{effect->
+                main.asServer?.let{server->
+                    if(server) {
+                       paint.color = Color.BLUE
+                        canvas.drawText("${gameData.effectRemainServer}",80f*scaleX, 580f*scaleY, paint)
+                        canvas.drawBitmap(bitmapObstacles[effect], 100f*scaleX, 510f*scaleY, paint)
+                    }
+                }
             }
-            gameData.effectClient?.let{
-                paint.color = Color.RED
-                paint.textSize = TestGameCons.EFFECT_REMAIN_SIZE * scaleX
-                canvas.drawText("${gameData.effectRemainClient}", 250f*scaleX, 580f*scaleY, paint)
-                canvas.drawBitmap(bitmapObstacles[it], 250f*scaleX, 510f*scaleY, paint)
+
+            gameData.effectClient?.let{ effect->
+                main.asServer?.let { server ->
+                    if (!server) {
+                        paint.color = Color.RED
+                        canvas.drawText("${gameData.effectRemainClient}",80f*scaleX, 580f*scaleY, paint)
+                        canvas.drawBitmap(bitmapObstacles[effect], 100f*scaleX,510f * scaleY, paint)
+                    }
+                }
+            }
+
+            canvas.drawBitmap(bitmapObstacles[gameData.ball.getSizeIndex() + 3], 270f*scaleX,510f * scaleY, paint)
+
+
+            var ballSpeedImageIndex : Int? = null
+            Log.i("drawEffect", "speed ${gameData.ball.spped}")
+            when(gameData.ball.spped){
+                TestGameCons.BALL_SPEED_INITIAL -> {ballSpeedImageIndex = null}
+                TestGameCons.BALL_SPEED_LOW-> {ballSpeedImageIndex=0}
+                TestGameCons.BALL_SPEED_NORMAL-> {ballSpeedImageIndex=1}
+                TestGameCons.BALL_SPEED_HIGH -> {ballSpeedImageIndex=2}
+                else -> Log.e(">>>>", "error ball.speed")
+            }
+            Log.i("drawEffect", "ball speed Index : $ballSpeedImageIndex")
+            ballSpeedImageIndex?.let{
+                canvas.drawBitmap(bitmapObstacles[it], 270f*scaleX,550f * scaleY, paint)
             }
         }
 

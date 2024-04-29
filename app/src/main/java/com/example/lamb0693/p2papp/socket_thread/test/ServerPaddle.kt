@@ -17,11 +17,13 @@ class ServerPaddle : Paddle() {
 
     override fun passCollisionBorder(ball : Ball, currentPoint : PointF) : Boolean {
         // passed downward? 볼 엉덩이가 선을 지나갔는 지
+        Log.i("passCollisionBorder", "checking pass collision border : $collisionBorder")
         if(ball.pos.y + ball.radius >= collisionBorder ) return false // 출발점이 접촉면이면 pass가 안됨
         if(currentPoint.y + ball.radius <  collisionBorder ) return false  // 밖에서 출발 접촉선에 물리면 pass로 판정
-        Log.i(">>>>", "prev ballX, ballY, $ball.pos")
-        Log.i(">>>>", "temp ball $currentPoint")
-        Log.i(">>>>", "passed through Line")
+        Log.i("passCollisionBorder", "passed through Line")
+        Log.i("passCollisionBorder", "prev ball.pos ${ball.pos}")
+        Log.i("passCollisionBorder", "ball radius, ${ball.radius}")
+        Log.i("passCollisionBorder", "temp.pos $currentPoint")
         return true
     }
 

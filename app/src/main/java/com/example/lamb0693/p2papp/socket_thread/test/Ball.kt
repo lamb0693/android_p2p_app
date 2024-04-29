@@ -13,8 +13,8 @@ class Ball {
         if (Random.nextBoolean()) 5.4f else -5.4f, // Randomly choose between -5.4 and 5.4 for x
         if (Random.nextBoolean()) 5.4f else -5.4f  // Randomly choose between -5.4 and 5.4 for y
     )
-    var radius : Float = 15f  // 15, 20
-    var spped : Float = 1f  // 0.8  1.2
+    var radius : Float = TestGameCons.BALL_SIZE_NORMAL // 15, 20
+    var spped : Float = TestGameCons.BALL_SPEED_INITIAL // 0.8  1.2
 
     fun move() {
         pos.x += delta.x * spped
@@ -36,15 +36,15 @@ class Ball {
         pos.y =  Random.nextInt(200, 301).toFloat()
         delta.x = if (Random.nextBoolean()) 5.4f else -5.4f
         delta.y = if (Random.nextBoolean()) 5.4f else -5.4f
-        radius  = 15f  // 15, 20
-        spped = 1f  // 0.8  1.2
+        radius  = TestGameCons.BALL_SIZE_NORMAL // 15
+        spped = 1f
     }
 
-    fun getSize() : Int{
+    fun getSizeIndex() : Int{
         return when(radius) {
-            10f -> 0
-            15f -> 1
-            20f -> 2
+            TestGameCons.BALL_SIZE_SMALL -> 0
+            TestGameCons.BALL_SIZE_NORMAL -> 1
+            TestGameCons.BALL_SIZE_LARGE -> 2
             else -> {
                 Log.e(">>>>", "wrong parameter  getting ball size")
                 1
@@ -52,11 +52,11 @@ class Ball {
         }
     }
 
-    fun setSize(size : Int) {
+    fun setSizeIndex(size : Int) {
         when(size) {
-            0 -> radius = 10f
-            1 -> radius = 15f
-            2 -> radius = 20f
+            0 -> radius = TestGameCons.BALL_SIZE_SMALL
+            1 -> radius = TestGameCons.BALL_SIZE_NORMAL
+            2 -> radius = TestGameCons.BALL_SIZE_LARGE
             else -> {
                 Log.e(">>>>", "error setting ball size")
             }

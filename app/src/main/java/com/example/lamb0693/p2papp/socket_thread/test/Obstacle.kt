@@ -9,7 +9,7 @@ class Obstacle {
     var row : Int = Random.nextInt(0, 7)// 0-6
     var curPosX : Float
 
-    var type : Int = Random.nextInt(0, 8)// 0-8
+    var type : Int = Random.nextInt(0, 9)// 0-8
     val positive = Random.nextBoolean()
     var speed: Float = if (positive) {
         5 * Random.nextFloat() + 5 // Range (5, 10)
