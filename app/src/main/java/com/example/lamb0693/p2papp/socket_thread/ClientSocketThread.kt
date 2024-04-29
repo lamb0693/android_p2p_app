@@ -55,20 +55,24 @@ open class ClientSocketThread (private val host : InetSocketAddress,
                     val bytesRead = inputStream?.read(buffer)
                     if (bytesRead != null && bytesRead > 0) {
                         val receivedMessage = String(buffer, 0, bytesRead)
-                        // Handle the received message
-                        Log.i(">>>>",  "ClientThread ReceivedMessage : $receivedMessage")
 
-                        if(receivedMessage.startsWith("GAME_DATA")){
-                            messageCallback.onGameDataReceivedFromServerViaSocket(receivedMessage)
-                        } else {
-                            when(receivedMessage) {
-                                "SERVER_STARTED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
-                                "SERVER_PAUSED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.PAUSED)
-                                "SERVER_RESTARTED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
-                                "SERVER_STOPPED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STOPPED)
-                                "SERVER_WIN" -> messageCallback.onGameWinnerFromServerViaSocket(true)
-                                "CLIENT_WIN" -> messageCallback.onGameWinnerFromServerViaSocket(false)
-                                else -> messageCallback.onOtherMessageReceivedFromServerViaSocket(receivedMessage)
+                        val messages = receivedMessage.split("\n")
+                        for (msg in messages){
+                            if(msg.isNotBlank()){
+                                if(msg.startsWith("GAME_DATA")){
+                                    messageCallback.onGameDataReceivedFromServerViaSocket(msg)
+                                } else {
+                                    Log.i(">>>>",  "ClientThread ReceivedMessage : $msg")
+                                    when(msg) {
+                                        "SERVER_STARTED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
+                                        "SERVER_PAUSED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.PAUSED)
+                                        "SERVER_RESTARTED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STARTED)
+                                        "SERVER_STOPPED_GAME" -> messageCallback.onGameStateFromServerViaSocket(GameState.STOPPED)
+                                        "SERVER_WIN" -> messageCallback.onGameWinnerFromServerViaSocket(true)
+                                        "CLIENT_WIN" -> messageCallback.onGameWinnerFromServerViaSocket(false)
+                                        else -> messageCallback.onOtherMessageReceivedFromServerViaSocket(msg)
+                                    }
+                                }
                             }
                         }
                     } else {
@@ -101,7 +105,7 @@ open class ClientSocketThread (private val host : InetSocketAddress,
             if (socket != null && socket!!.isConnected) {
                 CoroutineScope(Dispatchers.IO).launch {
                     outputStream?.write(message.toByteArray())
-                    Log.i(">>>>", "sendMessageToServerViaSocket@ClientSocketThred sended message $message to ClientSocket")
+                    //Log.i(">>>>", "sendMessageToServerViaSocket@ClientSocketThred sended message $message to ClientSocket")
                 }
             }
         } catch(e:Exception) {

@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".fragment.TestFragment" >
+    tools:context=".fragment.BounceFragment" >
 
     <LinearLayout
         android:background="#cccccc"
@@ -27,22 +28,24 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="17sp"
-            android:text="@string/test_game" />
+            android:text="@string/bounce_game" />
 
         <Button
             android:id="@+id/buttonStartTestGame"
-            android:layout_width="120dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
+            style="@style/CustomBorderlessButtonWithColorPrimary"
             android:text="@string/start" />
 
-        <Button
+        <ImageButton
             android:id="@+id/buttonToHomeFromTest"
-            android:layout_width="120dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="@string/home" />
+            android:src="@android:drawable/ic_menu_revert"
+            android:contentDescription="@string/image_button_to_home" />
     </LinearLayout>
 
-    <view class="com.example.lamb0693.p2papp.fragment.TestFragment$TestGameView"
+    <view class="com.example.lamb0693.p2papp.fragment.BounceFragment$BounceGameView"
         android:id="@+id/viewTestGame"
         android:background="@color/design_default_color_primary"
         android:layout_width="match_parent"

@@ -3,7 +3,7 @@ package com.example.lamb0693.p2papp
 import android.content.Context
 import androidx.appcompat.app.AlertDialog
 
-class SimpleConfirmDialog (context : Context, title : String, message : String) : AlertDialog.Builder(context){
+class SimpleConfirmDialog(context: Context, title: Int, message: Int) : AlertDialog.Builder(context){
     init{
         setTitle(title)
         setMessage(message)

@@ -1,4 +1,4 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
 import android.graphics.PointF
 import android.graphics.RectF
@@ -9,7 +9,7 @@ class Obstacle {
     var row : Int = Random.nextInt(0, 7)// 0-6
     var curPosX : Float
 
-    var type : Int = Random.nextInt(0, 9)// 0-9
+    var type : Int = Random.nextInt(0, 9)// 0-8
     val positive = Random.nextBoolean()
     var speed: Float = if (positive) {
         5 * Random.nextFloat() + 5 // Range (5, 10)
@@ -19,7 +19,7 @@ class Obstacle {
 
     init {
         curPosX = if(speed > 0 ) 0f
-        else TestGameCons.BITMAP_WIDTH.toFloat()
+        else BounceCons.BITMAP_WIDTH.toFloat()
     }
 
     fun toJson(): String {
@@ -41,6 +41,10 @@ class Obstacle {
     fun getScaledRect(scaleX : Float, scaleY : Float) : RectF{
         return RectF((curPosX-15) * scaleX, (row*50f + 100 -15)*scaleY,
             (curPosX+15)*scaleX, (row*50f + 100 +15)*scaleY)
+    }
+
+    fun getScaledDrawingPoint(scaleX : Float, scaleY : Float) : PointF {
+        return  PointF(  (curPosX-15)* scaleX, (row*50f + 100 -15)*scaleY )
     }
 
     fun getUpperBorderY() : Float {
