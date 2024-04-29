@@ -4,7 +4,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 
-class TestViewModel : ViewModel() {
+class BounceViewModel : ViewModel() {
     private val _socketConnected = MutableLiveData<Boolean>()
     val socketConnected : LiveData<Boolean> get() = _socketConnected
 

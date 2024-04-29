@@ -1,4 +1,4 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
 import android.graphics.PointF
 import android.util.Log
@@ -13,8 +13,8 @@ class Ball {
         if (Random.nextBoolean()) 5.4f else -5.4f, // Randomly choose between -5.4 and 5.4 for x
         if (Random.nextBoolean()) 5.4f else -5.4f  // Randomly choose between -5.4 and 5.4 for y
     )
-    var radius : Float = TestGameCons.BALL_SIZE_NORMAL // 15, 20
-    var spped : Float = TestGameCons.BALL_SPEED_INITIAL // 0.8  1.2
+    var radius : Float = BounceCons.BALL_SIZE_NORMAL // 15, 20
+    var spped : Float = BounceCons.BALL_SPEED_INITIAL // 0.8  1.2
 
     fun move() {
         pos.x += delta.x * spped
@@ -36,15 +36,15 @@ class Ball {
         pos.y =  Random.nextInt(200, 301).toFloat()
         delta.x = if (Random.nextBoolean()) 5.4f else -5.4f
         delta.y = if (Random.nextBoolean()) 5.4f else -5.4f
-        radius  = TestGameCons.BALL_SIZE_NORMAL // 15
+        radius  = BounceCons.BALL_SIZE_NORMAL // 15
         spped = 1f
     }
 
     fun getSizeIndex() : Int{
         return when(radius) {
-            TestGameCons.BALL_SIZE_SMALL -> 0
-            TestGameCons.BALL_SIZE_NORMAL -> 1
-            TestGameCons.BALL_SIZE_LARGE -> 2
+            BounceCons.BALL_SIZE_SMALL -> 0
+            BounceCons.BALL_SIZE_NORMAL -> 1
+            BounceCons.BALL_SIZE_LARGE -> 2
             else -> {
                 Log.e(">>>>", "wrong parameter  getting ball size")
                 1
@@ -54,9 +54,9 @@ class Ball {
 
     fun setSizeIndex(size : Int) {
         when(size) {
-            0 -> radius = TestGameCons.BALL_SIZE_SMALL
-            1 -> radius = TestGameCons.BALL_SIZE_NORMAL
-            2 -> radius = TestGameCons.BALL_SIZE_LARGE
+            0 -> radius = BounceCons.BALL_SIZE_SMALL
+            1 -> radius = BounceCons.BALL_SIZE_NORMAL
+            2 -> radius = BounceCons.BALL_SIZE_LARGE
             else -> {
                 Log.e(">>>>", "error setting ball size")
             }

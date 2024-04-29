@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".fragment.TestFragment" >
+    tools:context=".fragment.BounceFragment" >
 
     <LinearLayout
         android:background="#cccccc"
@@ -28,7 +28,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="17sp"
-            android:text="@string/test_game" />
+            android:text="@string/bounce_game" />
 
         <Button
             android:id="@+id/buttonStartTestGame"
@@ -45,7 +45,7 @@
             android:contentDescription="@string/image_button_to_home" />
     </LinearLayout>
 
-    <view class="com.example.lamb0693.p2papp.fragment.TestFragment$TestGameView"
+    <view class="com.example.lamb0693.p2papp.fragment.BounceFragment$BounceGameView"
         android:id="@+id/viewTestGame"
         android:background="@color/design_default_color_primary"
         android:layout_width="match_parent"

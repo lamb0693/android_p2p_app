@@ -1,6 +1,5 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
-import android.graphics.Picture
 import android.graphics.PointF
 import android.graphics.RectF
 import android.util.Log
@@ -10,12 +9,12 @@ import com.example.lamb0693.p2papp.viewmodel.GameState
 import kotlin.math.*
 
 
-class TestServerSocketThread (
+class BounceServerSocketThread (
     private val messageCallback: ThreadMessageCallback,
 ) : ServerSocketThread(messageCallback){
 
-    override var timerInterval : Long = TestGameCons.TEST_GAME_INTERVAL
-    private var gameData = TestGameData()
+    override var timerInterval : Long = BounceCons.TEST_GAME_INTERVAL
+    private var gameData = BounceData()
 
     private var count : Int = 0
 
@@ -51,18 +50,18 @@ class TestServerSocketThread (
             gameData.ball.delta.x *= (-1)
             // 팅겨나간 것으로 반영
             tempPoint.x *= -1
-        } else if (tempPoint.x >= TestGameCons.BITMAP_WIDTH){
+        } else if (tempPoint.x >= BounceCons.BITMAP_WIDTH){
             //오른쪽 벽 밖에 대한 처리
             // x movement를 반대로 설정
             gameData.ball.delta.x *= (-1)
             //팅겨 나간 것으로 반영
-            tempPoint.x = TestGameCons.BITMAP_WIDTH - 2 * (tempPoint.x - TestGameCons.BITMAP_WIDTH)
+            tempPoint.x = BounceCons.BITMAP_WIDTH - 2 * (tempPoint.x - BounceCons.BITMAP_WIDTH)
         }
 
         // obstacle 이동 및 범위 초과 하면 remove
         gameData.obstacles.forEach{it.move() }
         gameData.obstacles.removeIf {
-            it.curPosX > TestGameCons.BITMAP_WIDTH || it.curPosX < 0
+            it.curPosX > BounceCons.BITMAP_WIDTH || it.curPosX < 0
         }
         // obstacle 충돌 처리, tempPoint 값이 함수 안에서 수정 됨
         if(tempPoint.y in 100.0..400.0) {
@@ -97,7 +96,7 @@ class TestServerSocketThread (
         }
 
         // obstacle 생성
-        if( count%TestGameCons.OBSTACLE_REGEN_INTERVAL == 0) {
+        if( count%BounceCons.OBSTACLE_REGEN_INTERVAL == 0) {
             gameData.obstacles.add(Obstacle())
         }
     }
@@ -210,9 +209,9 @@ class TestServerSocketThread (
                 // obstacle effect 설정
                 when(obstacle.type){
                     // ball speed 변화
-                    0 -> gameData.ball.spped = TestGameCons.BALL_SPEED_LOW
-                    1 -> gameData.ball.spped = TestGameCons.BALL_SPEED_NORMAL
-                    2 -> gameData.ball.spped = TestGameCons.BALL_SPEED_HIGH
+                    0 -> gameData.ball.spped = BounceCons.BALL_SPEED_LOW
+                    1 -> gameData.ball.spped = BounceCons.BALL_SPEED_NORMAL
+                    2 -> gameData.ball.spped = BounceCons.BALL_SPEED_HIGH
                     // ball 크기 변화
                     3, 4, 5 -> {
                         gameData.ball.setSizeIndex(obstacle.type -3)
@@ -234,12 +233,12 @@ class TestServerSocketThread (
                             if(it) {
                                 Log.i("processCollideWithObstacle", "collision, isSeverPalying = true set server Paddle to 1")
                                 gameData.effectServer = obstacle.type
-                                gameData.effectRemainServer= TestGameCons.EFFECT_DURATION
+                                gameData.effectRemainServer= BounceCons.EFFECT_DURATION
                                 gameData.serverPaddle.setPaddleState(obstacle.type - 6)
                             }else {
                                 Log.i("processCollideWithObstacle", "collision, isSeverPalying = false set client Paddle to 1")
                                 gameData.effectClient = obstacle.type
-                                gameData.effectRemainClient= TestGameCons.EFFECT_DURATION
+                                gameData.effectRemainClient= BounceCons.EFFECT_DURATION
                                 gameData.clientPaddle.setPaddleState(obstacle.type - 6)
                             }
                         }

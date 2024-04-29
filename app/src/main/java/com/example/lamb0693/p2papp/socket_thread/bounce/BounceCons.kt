@@ -1,8 +1,8 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
 import android.graphics.RectF
 
-object TestGameCons {
+object BounceCons {
     // 화면 refreshing interval
     const val TEST_GAME_INTERVAL = 100L
 

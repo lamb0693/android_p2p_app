@@ -11,9 +11,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageButton
-import android.widget.RadioButton
 import android.widget.TextView
 import com.example.lamb0693.p2papp.R
 import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
@@ -53,10 +51,10 @@ class HomeFragment : Fragment() {
         // Inflate the layout for this fragment
         thisView = inflater.inflate(R.layout.fragment_home, container, false)
 
-        val buttonGame1 = thisView?.findViewById<ImageButton>(R.id.imageButtonGame1)
-        if(buttonGame1 == null) Log.e(">>>>", "buttonAsServer null")
-        buttonGame1?.setOnClickListener{
-            fragmentTransactionHandler?.onGame1ButtonClicked()
+        val buttonBounce = thisView?.findViewById<ImageButton>(R.id.imageButtonBounce)
+        if(buttonBounce == null) Log.e(">>>>", "buttonAsServer null")
+        buttonBounce?.setOnClickListener{
+            fragmentTransactionHandler?.onGameBounceButtonClicked()
         }
 
         return thisView

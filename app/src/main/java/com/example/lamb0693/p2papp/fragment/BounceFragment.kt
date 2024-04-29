@@ -35,13 +35,13 @@ import com.example.lamb0693.p2papp.Constant
 import com.example.lamb0693.p2papp.MainActivity
 import com.example.lamb0693.p2papp.R
 import com.example.lamb0693.p2papp.SimpleConfirmDialog
-import com.example.lamb0693.p2papp.viewmodel.TestViewModel
+import com.example.lamb0693.p2papp.viewmodel.BounceViewModel
 import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
-import com.example.lamb0693.p2papp.socket_thread.test.TestGameCons
-import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
-import com.example.lamb0693.p2papp.socket_thread.test.TestServerSocketThread
+import com.example.lamb0693.p2papp.socket_thread.bounce.BounceCons
+import com.example.lamb0693.p2papp.socket_thread.bounce.BounceData
+import com.example.lamb0693.p2papp.socket_thread.bounce.BounceServerSocketThread
 import com.example.lamb0693.p2papp.viewmodel.GameState
 import java.net.InetSocketAddress
 import java.util.Timer
@@ -54,19 +54,19 @@ private const val ARG_PARAM2 = "param2"
 
 /**
  * A simple [Fragment] subclass.
- * Use the [TestFragment.newInstance] factory method to
+ * Use the [BounceFragment.newInstance] factory method to
  * create an instance of this fragment.
  */
-class TestFragment : Fragment(), ThreadMessageCallback {
+class BounceFragment : Fragment(), ThreadMessageCallback {
     // TODO: Rename and change types of parameters
     private var param1: String? = null
     private var param2: String? = null
 
     // socketConnected와, GameStatus를 위한 ViewModel
-    private lateinit var testViewModel : TestViewModel
+    private lateinit var bounceViewModel : BounceViewModel
 
     //Fragment를 Activity에 전달하기 위한 View
-    private lateinit var testView : View
+    private lateinit var bounceView : View
 
     // homeFragment는 항상 Activity에 남아 있음
     private var homeFragment: HomeFragment? = null
@@ -74,7 +74,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
     // Game 화면을 그리기 위한 View
-    private lateinit var testGameView: TestGameView
+    private lateinit var bounceGameView: BounceGameView
 
     private var buttonStart : Button?= null
     private var buttonToHome : ImageButton? = null
@@ -85,7 +85,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     //socketThread
     private lateinit var serverSocketAddress : InetSocketAddress
-    private var serverSocketThread : TestServerSocketThread? =  null
+    private var serverSocketThread : BounceServerSocketThread? =  null
     private var clientSocketThread : ClientSocketThread? =  null
 
     private var networkCallback : ConnectivityManager.NetworkCallback? =null
@@ -100,7 +100,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     /***********************************
      * TestGameView
      **********************************/
-    class TestGameView @JvmOverloads constructor(
+    class BounceGameView @JvmOverloads constructor(
         context: Context,
         attrs: AttributeSet? = null,
         defStyleAttr: Int = 0
@@ -108,7 +108,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         var serverWin = 0
         var clientWin = 0
 
-        var gameData = TestGameData()  // class를 만드는 것은 의미 없음. 단지 만들어 놓음
+        var gameData = BounceData()  // class를 만드는 것은 의미 없음. 단지 만들어 놓음
 
         private val paint: Paint = Paint()
 
@@ -174,32 +174,32 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             super.onSizeChanged(w, h, oldw, oldh)
 
             // Calculate scaling factors to adjust bitmap size based on device screen size
-            scaleX = w.toFloat() / TestGameCons.BITMAP_WIDTH // DESIRED_WIDTH is the width you want your game graphics to be
-            scaleY = h.toFloat() / TestGameCons.BITMAP_HEIGHT // DESIRED_HEIGHT is the height you want your game graphics to be
+            scaleX = w.toFloat() / BounceCons.BITMAP_WIDTH // DESIRED_WIDTH is the width you want your game graphics to be
+            scaleY = h.toFloat() / BounceCons.BITMAP_HEIGHT // DESIRED_HEIGHT is the height you want your game graphics to be
 
             backgroundBitmap = Bitmap.createScaledBitmap(backgroundBitmap, w, h,true)
 
             // resize bitmaps of Controller
-            controllerRect.left = TestGameCons.CONTROLLER_RECT.left * scaleX
-            controllerRect.top = TestGameCons.CONTROLLER_RECT.top * scaleY
-            controllerRect.right = TestGameCons.CONTROLLER_RECT.right * scaleX
-            controllerRect.bottom = TestGameCons.CONTROLLER_RECT.bottom * scaleY
+            controllerRect.left = BounceCons.CONTROLLER_RECT.left * scaleX
+            controllerRect.top = BounceCons.CONTROLLER_RECT.top * scaleY
+            controllerRect.right = BounceCons.CONTROLLER_RECT.right * scaleX
+            controllerRect.bottom = BounceCons.CONTROLLER_RECT.bottom * scaleY
 
             bitmapControllerServer = Bitmap.createScaledBitmap(bitmapControllerServer,
-                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
-                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+                (BounceCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (BounceCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
             bitmapControllerClient = Bitmap.createScaledBitmap(bitmapControllerClient,
-                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
-                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+                (BounceCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (BounceCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
             bitmapControllerNeutral = Bitmap.createScaledBitmap(bitmapControllerNeutral,
-                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
-                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+                (BounceCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (BounceCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
             bitmapControllerLeft = Bitmap.createScaledBitmap(bitmapControllerLeft,
-                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
-                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+                (BounceCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (BounceCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
             bitmapControllerRight = Bitmap.createScaledBitmap(bitmapControllerRight,
-                (TestGameCons.CONTROLLER_WIDTH * scaleX).toInt(),
-                (TestGameCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
+                (BounceCons.CONTROLLER_WIDTH * scaleX).toInt(),
+                (BounceCons.CONTROLLER_HEIGHT * scaleY).toInt(), true)
 
             bitmapRemnant = Bitmap.createScaledBitmap(bitmapRemnant,
                 (60*scaleX).toInt(), (60*scaleY).toInt(), true)
@@ -285,16 +285,16 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         private fun drawScore(canvas : Canvas){
             val serverScoreX = 20f * scaleX
             val clientScoreX = 340f * scaleX
-            val scoreY = TestGameCons.PRINT_SCORE_BASELINE * scaleY
+            val scoreY = BounceCons.PRINT_SCORE_BASELINE * scaleY
             paint.color = Color.BLUE
-            paint.textSize = TestGameCons.SCORE_SIZE * scaleX
+            paint.textSize = BounceCons.SCORE_SIZE * scaleX
             canvas.drawText("$serverWin", serverScoreX, scoreY, paint)
             paint.color = Color.RED
-            paint.textSize = TestGameCons.SCORE_SIZE * scaleX
+            paint.textSize = BounceCons.SCORE_SIZE * scaleX
             canvas.drawText("$clientWin", clientScoreX, scoreY, paint)
         }
         private fun drawEffect(canvas : Canvas) {
-            paint.textSize = TestGameCons.EFFECT_REMAIN_SIZE * scaleX
+            paint.textSize = BounceCons.EFFECT_REMAIN_SIZE * scaleX
             val main = (context as MainActivity)
 
             gameData.effectServer?.let{effect->
@@ -323,10 +323,10 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             var ballSpeedImageIndex : Int? = null
             Log.i("drawEffect", "speed ${gameData.ball.spped}")
             when(gameData.ball.spped){
-                TestGameCons.BALL_SPEED_INITIAL -> {ballSpeedImageIndex = null}
-                TestGameCons.BALL_SPEED_LOW-> {ballSpeedImageIndex=0}
-                TestGameCons.BALL_SPEED_NORMAL-> {ballSpeedImageIndex=1}
-                TestGameCons.BALL_SPEED_HIGH -> {ballSpeedImageIndex=2}
+                BounceCons.BALL_SPEED_INITIAL -> {ballSpeedImageIndex = null}
+                BounceCons.BALL_SPEED_LOW-> {ballSpeedImageIndex=0}
+                BounceCons.BALL_SPEED_NORMAL-> {ballSpeedImageIndex=1}
+                BounceCons.BALL_SPEED_HIGH -> {ballSpeedImageIndex=2}
                 else -> Log.e(">>>>", "error ball.speed")
             }
             Log.i("drawEffect", "ball speed Index : $ballSpeedImageIndex")
@@ -352,18 +352,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     }
 
     /***********************************
-     * TestFragment
+     * BounceFragment
      **********************************/
     private fun initViewModel() {
-        testViewModel = ViewModelProvider(this)[TestViewModel::class.java]
+        bounceViewModel = ViewModelProvider(this)[BounceViewModel::class.java]
 
-        testViewModel.socketConnected.observe(viewLifecycleOwner){
-            val imageViewSocketConnected = testView.findViewById<ImageView>(R.id.imageSocketConnectStatus)
+        bounceViewModel.socketConnected.observe(viewLifecycleOwner){
+            val imageViewSocketConnected = bounceView.findViewById<ImageView>(R.id.imageSocketConnectStatus)
             if(it) imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_on)
             else imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_off)
         }
 
-        testViewModel.gameState.observe(viewLifecycleOwner) {
+        bounceViewModel.gameState.observe(viewLifecycleOwner) {
             when(it) {
                 GameState.STOPPED -> {
                     buttonStart?.text = getString(R.string.start)
@@ -379,10 +379,10 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     // Fragment의 Button 초기화 및 설정
     private fun initTestViewButtonAndListener(){
-        buttonToHome = testView.findViewById<ImageButton>(R.id.buttonToHomeFromTest)
+        buttonToHome = bounceView.findViewById<ImageButton>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
 
-        buttonStart = testView.findViewById<Button>(R.id.buttonStartTestGame)
+        buttonStart = bounceView.findViewById<Button>(R.id.buttonStartTestGame)
         if(buttonStart == null) Log.e(">>>>", "buttonStart null")
         buttonStart?.isEnabled = false
 
@@ -393,13 +393,13 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         // button click 하면 sever에 message 보내기만,  ui 처리는 server에서 돌아오면 한다.
         buttonStart?.setOnClickListener{
             buttonStart?.isEnabled = false
-            if(testViewModel.gameState.value == GameState.STOPPED) {
+            if(bounceViewModel.gameState.value == GameState.STOPPED) {
                 if(mainActivity.asServer!!) serverSocketThread?.setServerPrepared()
                 else clientSocketThread?.onMessageFromClientToServer("CLIENT_PREPARED_GAME")
-            } else if(testViewModel.gameState.value == GameState.STARTED) {
+            } else if(bounceViewModel.gameState.value == GameState.STARTED) {
                 if (mainActivity.asServer!!) serverSocketThread?.setPauseGameRoutine(true)
                 else clientSocketThread?.onMessageFromClientToServer("CLIENT_PAUSED_GAME")
-            } else if(testViewModel.gameState.value == GameState.PAUSED) {
+            } else if(bounceViewModel.gameState.value == GameState.PAUSED) {
                 if (mainActivity.asServer!!) serverSocketThread?.setPauseGameRoutine(false)
                 else clientSocketThread?.onMessageFromClientToServer("CLIENT_RESTART_GAME")
             }
@@ -421,7 +421,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     }
 
     private fun navigateToHome() {
-        if(testViewModel.socketConnected.value == true){
+        if(bounceViewModel.socketConnected.value == true){
             if(mainActivity.asServer!!) serverSocketThread?.quitServerThread()
             else clientSocketThread?.onQuitMessageFromFragment()
         } else{
@@ -444,15 +444,15 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                               savedInstanceState: Bundle?): View? {
 
         // Inflate the layout for this fragment
-        testView = inflater.inflate(R.layout.fragment_test, container, false)
-        testGameView = testView.findViewById(R.id.viewTestGame)
+        bounceView = inflater.inflate(R.layout.fragment_test, container, false)
+        bounceGameView = bounceView.findViewById(R.id.viewTestGame)
 
         connectivityManager = mainActivity.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
 
         initViewModel()
         initTestViewButtonAndListener()
 
-        return testView
+        return bounceView
     }
 
     // View가 생성되고 난 뒤 Socket 연결 및 Controller를 초기화 함
@@ -473,12 +473,12 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
     // Game Controller 초기화 및 설정
     private fun initGameInterfaceListener() {
-        testGameView.setOnTouchListener { view, event ->
+        bounceGameView.setOnTouchListener { view, event ->
             when (event.action) {
                 MotionEvent.ACTION_DOWN -> {
                     // Check if touch is inside the controller area
-                    if (testGameView.controllerRect.contains(event.x, event.y)) {
-                        testGameView.isUsingStick = true
+                    if (bounceGameView.controllerRect.contains(event.x, event.y)) {
+                        bounceGameView.isUsingStick = true
                         startStickX = event.x
                         currentPosition.x = event.x
                         currentPosition.y = event.y
@@ -489,14 +489,14 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 }
                 MotionEvent.ACTION_MOVE -> {
                     // Update current position if user is using the stick
-                    if (testGameView.isUsingStick) {
+                    if (bounceGameView.isUsingStick) {
                         currentPosition.x = event.x
                         currentPosition.y = event.y
                     }
                     true // Indicate that touch event is consumed
                 }
                 MotionEvent.ACTION_UP -> {
-                    testGameView.isUsingStick = false
+                    bounceGameView.isUsingStick = false
                     view.performClick() // Call performClick() on ACTION_UP
                     true // Indicate that touch event is consumed
                 }
@@ -512,26 +512,26 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 touchTimer = Timer().apply {
                     scheduleAtFixedRate(object : TimerTask() {
                         override fun run() {
-                            testGameView.isDraggingRight = currentPosition.x > startStickX + TestGameCons.CONTROLLER_NEUTRAL_WIDTH
-                            testGameView.isDraggingLeft = currentPosition.x < startStickX - TestGameCons.CONTROLLER_NEUTRAL_WIDTH
+                            bounceGameView.isDraggingRight = currentPosition.x > startStickX + BounceCons.CONTROLLER_NEUTRAL_WIDTH
+                            bounceGameView.isDraggingLeft = currentPosition.x < startStickX - BounceCons.CONTROLLER_NEUTRAL_WIDTH
 
-                            if (!testGameView.isUsingStick) return
+                            if (!bounceGameView.isUsingStick) return
 
                             if (mainActivity.asServer!!) {
-                                if (testGameView.isDraggingRight) {
+                                if (bounceGameView.isDraggingRight) {
                                     serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_RIGHT")
-                                } else if (testGameView.isDraggingLeft) {
+                                } else if (bounceGameView.isDraggingLeft) {
                                     serverSocketThread?.onGameDataFromServerFragment("ACTION:SERVER_LEFT")
                                 }
                             } else {
-                                if (testGameView.isDraggingRight) {
+                                if (bounceGameView.isDraggingRight) {
                                     clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_RIGHT")
-                                } else if (testGameView.isDraggingLeft) {
+                                } else if (bounceGameView.isDraggingLeft) {
                                     clientSocketThread?.onMessageFromClientToServer("ACTION:CLIENT_LEFT")
                                 }
                             }
                         }
-                    }, 0, TestGameCons.TOUCH_EVENT_INTERVAL)
+                    }, 0, BounceCons.TOUCH_EVENT_INTERVAL)
                 }
             }
         } else {
@@ -596,7 +596,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
         Log.i(">>>>", "init serverSocket")
 
-        serverSocketThread = TestServerSocketThread(this@TestFragment)
+        serverSocketThread = BounceServerSocketThread(this@BounceFragment)
 
         // WifiAwareNetworkSpecifier 생성
         val networkSpecifier = WifiAwareNetworkSpecifier.Builder(
@@ -686,7 +686,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
 
                 if(clientSocketThread == null){
                     try{
-                        clientSocketThread = ClientSocketThread(serverSocketAddress,this@TestFragment)
+                        clientSocketThread = ClientSocketThread(serverSocketAddress,this@BounceFragment)
                         clientSocketThread?.start()
                     } catch(e : Exception){
                         Log.e(">>>>", "clientSocket : ${e.message}")
@@ -698,7 +698,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
                 Log.i(">>>>", "NetworkCallback onLost")
                 // 필요 없을 듯 removeCurrentSocketConnection()
                 mainActivity.runOnUiThread{
-                    testViewModel.setSocketConnected(false)
+                    bounceViewModel.setSocketConnected(false)
                 }
             }
         }
@@ -713,7 +713,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
      ***********************************/
     override fun onConnectionMade() {
         mainActivity.runOnUiThread{
-            testViewModel.setSocketConnected(true)
+            bounceViewModel.setSocketConnected(true)
             Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_SHORT).show()
             buttonStart?.isEnabled = true
         }
@@ -724,7 +724,7 @@ class TestFragment : Fragment(), ThreadMessageCallback {
     override fun onThreadTerminated() {
         Log.i(">>>>", "from thread : terminating")
         mainActivity.runOnUiThread {
-            testViewModel.setSocketConnected(false)
+            bounceViewModel.setSocketConnected(false)
             SimpleConfirmDialog(mainActivity, R.string.allim,
                 R.string.connection_lost_message).showDialog()
 
@@ -765,18 +765,18 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         when(gameState){
             GameState.STARTED-> {
                 Toast.makeText(mainActivity, "game started", Toast.LENGTH_SHORT).show()
-                testViewModel.setGameState(GameState.STARTED)
+                bounceViewModel.setGameState(GameState.STARTED)
                 startTouchEventTimer(true)
             }
             GameState.PAUSED-> {
                 startTouchEventTimer(false)
                 Toast.makeText(mainActivity, "game paused", Toast.LENGTH_SHORT).show()
-                testViewModel.setGameState(GameState.PAUSED)
+                bounceViewModel.setGameState(GameState.PAUSED)
             }
             GameState.STOPPED-> {
                 startTouchEventTimer(false)
                 Toast.makeText(mainActivity, "game stopped", Toast.LENGTH_SHORT).show()
-                testViewModel.setGameState(GameState.STOPPED)
+                bounceViewModel.setGameState(GameState.STOPPED)
             }
         }
         buttonStart?.isEnabled = true
@@ -788,9 +788,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
      * onGameDataReceivedFromServerViaSocket : from client thread, client only
      * processGameData
      */
-    override fun onGameDataReceivedFromThread(gameData: TestGameData) {
+    override fun onGameDataReceivedFromThread(gameData: BounceData) {
         if(mainActivity.asServer!!){
-            //Log.i(">>>>", "received gameData in TestFragment : $gameData")
+            //Log.i(">>>>", "received gameData in BounceFragment : $gameData")
             processGameData(gameData)
         } else {
             Log.e(">>>>", "onGameDataReceivedFromThread to client")
@@ -801,9 +801,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
             Log.e(">>>>", "onGameDataReceivedFromServerViaSocket to server")
         } else {
             try{
-                val gameData = TestGameData.fromString(strGameData)
+                val gameData = BounceData.fromString(strGameData)
                 //Log.i(">>>>", "received gameData from server : $gameData")
-                if (gameData is TestGameData) {
+                if (gameData is BounceData) {
                     processGameData(gameData)
                 } else {
                     Log.e(">>>>", "onGameDataReceivedFromServerViaSocket,  fail to Convert")
@@ -814,9 +814,9 @@ class TestFragment : Fragment(), ThreadMessageCallback {
          }
     }
 
-    private fun processGameData(gameData: TestGameData) {
-        testGameView.gameData = gameData
-        testGameView.invalidate()
+    private fun processGameData(gameData: BounceData) {
+        bounceGameView.gameData = gameData
+        bounceGameView.invalidate()
     }
 
     /**********************************]
@@ -829,16 +829,16 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         mainActivity.runOnUiThread {
             if(mainActivity.asServer!!) {
                 if(isServerWin) {
-                    testGameView.serverWin ++
+                    bounceGameView.serverWin ++
                     SimpleConfirmDialog(mainActivity,
                         R.string.win, R.string.win_message).showDialog()
                 } else {
-                    testGameView.clientWin ++
+                    bounceGameView.clientWin ++
                     SimpleConfirmDialog(mainActivity,
                         R.string.lose, R.string.lose_message).showDialog()
                 }
             }
-            testGameView.invalidate()
+            bounceGameView.invalidate()
             buttonStart?.isEnabled = true
         }
     }
@@ -847,16 +847,16 @@ class TestFragment : Fragment(), ThreadMessageCallback {
         mainActivity.runOnUiThread{
             if(!mainActivity.asServer!!) {
                 if(!isServerWin) {
-                    testGameView.clientWin ++
+                    bounceGameView.clientWin ++
                     SimpleConfirmDialog(mainActivity,
                         R.string.win, R.string.win_message).showDialog()
                 } else {
-                    testGameView.serverWin++
+                    bounceGameView.serverWin++
                     SimpleConfirmDialog(mainActivity,
                         R.string.lose, R.string.lose_message).showDialog()
                 }
             }
-            testGameView.invalidate()
+            bounceGameView.invalidate()
             buttonStart?.isEnabled = true
         }
     }
@@ -886,11 +886,11 @@ class TestFragment : Fragment(), ThreadMessageCallback {
          *
          * @param param1 Parameter 1.
          * @param param2 Parameter 2.
-         * @return A new instance of fragment TestFragment.
+         * @return A new instance of fragment BounceFragment.
          */
         // TODO: Rename and change types and number of parameters
         @JvmStatic fun newInstance(param1: String, param2: String) =
-            TestFragment().apply {
+            BounceFragment().apply {
                 arguments = Bundle().apply {
                     putString(ARG_PARAM1, param1)
                     putString(ARG_PARAM2, param2)

@@ -1,4 +1,4 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
 import android.graphics.PointF
 import android.util.Log
@@ -24,7 +24,7 @@ abstract class Paddle {
             else -> 0f
         }
         if(x < paddleWidth/2) x = paddleWidth/2
-        if(x > (TestGameCons.BITMAP_WIDTH - paddleWidth/2f)) x=TestGameCons.BITMAP_WIDTH - paddleWidth/2f
+        if(x > (BounceCons.BITMAP_WIDTH - paddleWidth/2f)) x=BounceCons.BITMAP_WIDTH - paddleWidth/2f
     }
 
     fun getDrawingPoint(scaleX : Float, scaleY : Float) : PointF{
@@ -39,7 +39,7 @@ abstract class Paddle {
     fun move(amount : Int) {
         x += amount
         if(x < paddleWidth/2) x = paddleWidth/2
-        if(x > (TestGameCons.BITMAP_WIDTH - paddleWidth/2f)) x= TestGameCons.BITMAP_WIDTH - paddleWidth/2f
+        if(x > (BounceCons.BITMAP_WIDTH - paddleWidth/2f)) x= BounceCons.BITMAP_WIDTH - paddleWidth/2f
     }
     open fun getRect() {}
     open fun getCollisionBorder() {}

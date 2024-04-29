@@ -7,20 +7,37 @@
     android:orientation="vertical"
     tools:context=".fragment.HomeFragment" >
 
-    <ImageButton
-        android:id="@+id/imageButtonGame1"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp"
-        android:src="@android:drawable/button_onoff_indicator_on" />
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <ImageButton
+            android:id="@+id/imageButtonBounce"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:layout_weight="1"
+            android:src="@android:drawable/button_onoff_indicator_on"
+            android:contentDescription="@string/bounce_game_description" />
+
+        <ImageButton
+            android:id="@+id/imageButtonGame2"
+            android:layout_width="0dp"
+            android:layout_height="100dp"
+            android:layout_weight="1"
+            android:src="@android:drawable/button_onoff_indicator_off"
+            android:contentDescription="TODO" />
+
+    </LinearLayout>
 
     <ImageButton
-        android:id="@+id/imageButtonGame2"
+        android:id="@+id/imageButtonGame3"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:src="@android:drawable/button_onoff_indicator_off" />
 
     <ImageButton
-        android:id="@+id/imageButtonGame3"
+        android:id="@+id/imageButtonGame4"
         android:layout_width="match_parent"
         android:layout_height="100dp"
         android:src="@android:drawable/button_onoff_indicator_off" />

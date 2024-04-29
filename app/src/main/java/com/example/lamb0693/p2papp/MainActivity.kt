@@ -29,7 +29,7 @@ import androidx.lifecycle.ViewModelProvider
 import com.example.lamb0693.p2papp.databinding.ActivityMainBinding
 import com.example.lamb0693.p2papp.fragment.HomeFragment
 import com.example.lamb0693.p2papp.fragment.SettingFragment
-import com.example.lamb0693.p2papp.fragment.TestFragment
+import com.example.lamb0693.p2papp.fragment.BounceFragment
 import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.viewmodel.MainViewModel
 
@@ -164,11 +164,11 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                         Toast.makeText(this@MainActivity, "상대방과 연결되었습니다", Toast.LENGTH_LONG).show()
                         sendMessageViaSession("SEND_SERVER_INFO")
                     } else if (receivedMessage.contains("REFUSE_INVITATION")){
-                        val testFragment : TestFragment? = getTestFragment()
-                        if(testFragment == null) {
-                            Log.e(">>>>", "testFragment null in onMessageReceived")
+                        val bounceFragment : BounceFragment? = getBounceFragment()
+                        if(bounceFragment == null) {
+                            Log.e(">>>>", "bounceFragment null in onMessageReceived")
                         } else {
-                            testFragment.cancelInitServerSocket()
+                            bounceFragment.cancelInitServerSocket()
                         }
                     } else {
                         homeFragment.addTextToChattingArea(receivedMessage, false)
@@ -338,15 +338,15 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
     }
 
     @RequiresApi(Build.VERSION_CODES.Q)
-    override fun onGame1ButtonClicked() {
+    override fun onGameBounceButtonClicked() {
         if(isSocketConnectionPossible()) {
             if(!asServer!!) {
                 SimpleConfirmDialog(this, R.string.allim ,R.string.condtion_open_room).showDialog()
                 return
             }
-            TestFragment.newInstance("val1", "val2").apply {
+            BounceFragment.newInstance("val1", "val2").apply {
                 setHomeFragment(homeFragment)
-                onChangeFragment(this, "TestFragment")
+                onChangeFragment(this, "BounceFragment")
             }
         } else {
             Toast.makeText(this, getString(R.string.wifiaware_first),
@@ -401,10 +401,10 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         alertDialogBuilder.setPositiveButton(R.string.accept) { dialogInterface, _ ->
             dialogInterface.dismiss()
             // Handle invitation acceptance here
-            // For example, start the TestFragment
-            TestFragment.newInstance("val1", "val2").apply {
+            // For example, start the BounceFragment
+            BounceFragment.newInstance("val1", "val2").apply {
                 setHomeFragment(homeFragment)
-                onChangeFragment(this, "TestFragment")
+                onChangeFragment(this, "BounceFragment")
             }
         }
         alertDialogBuilder.setNegativeButton(R.string.decline) { dialogInterface, _ ->
@@ -431,9 +431,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
             .show()
     }
 
-    private fun getTestFragment(): TestFragment? {
+    private fun getBounceFragment(): BounceFragment? {
         // Find the fragment by its tag
-        return supportFragmentManager.findFragmentByTag("TestFragment") as? TestFragment
+        return supportFragmentManager.findFragmentByTag("BounceFragment") as? BounceFragment
     }
 
     // viewModel.observer 에서만 실행

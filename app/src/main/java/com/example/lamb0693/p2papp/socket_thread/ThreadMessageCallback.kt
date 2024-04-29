@@ -1,6 +1,6 @@
 package com.example.lamb0693.p2papp.socket_thread
 
-import com.example.lamb0693.p2papp.socket_thread.test.TestGameData
+import com.example.lamb0693.p2papp.socket_thread.bounce.BounceData
 import com.example.lamb0693.p2papp.viewmodel.GameState
 
 /******************************
@@ -19,7 +19,7 @@ interface ThreadMessageCallback {
     fun onThreadStarted()
     fun onGameStateMessageFromThread(gameState: GameState)
     fun onGameStateFromServerViaSocket(gameState : GameState)
-    fun onGameDataReceivedFromThread(gameData: TestGameData)
+    fun onGameDataReceivedFromThread(gameData: BounceData)
     fun onGameDataReceivedFromServerViaSocket(strGameData: String)
     fun onGameWinnerFromThread(isServerWin: Boolean)
     fun onGameWinnerFromServerViaSocket(isServerWin: Boolean)

@@ -1,9 +1,9 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
 import android.graphics.PointF
 import com.google.gson.Gson
 
-class TestGameData() {
+class BounceData() {
 
     val serverPaddle = ServerPaddle()
     val clientPaddle = ClientPaddle()
@@ -49,11 +49,11 @@ class TestGameData() {
     }
 
     companion object {
-        fun fromString(string: String): TestGameData? {
+        fun fromString(string: String): BounceData? {
             if (string.startsWith("GAME_DATA")) {
                 val json = string.substringAfter("GAME_DATA")
                 val gson = Gson()
-                return gson.fromJson(json, TestGameData::class.java)
+                return gson.fromJson(json, BounceData::class.java)
             }
             return null
         }

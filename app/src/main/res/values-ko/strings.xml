@@ -9,7 +9,7 @@
     <string name="room_name">방 이름</string>
     <string name="disconnect">연결 끊기</string>
     <string name="home">홈 화면</string>
-    <string name="test_game">게임 Test</string>
+    <string name="bounce_game">게임 Test</string>
     <string name="send">보내기</string>
     <string name="setting">연결및 설정</string>
     <string name="start">시작</string>

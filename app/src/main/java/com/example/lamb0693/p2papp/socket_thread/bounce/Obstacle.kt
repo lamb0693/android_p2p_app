@@ -1,4 +1,4 @@
-package com.example.lamb0693.p2papp.socket_thread.test
+package com.example.lamb0693.p2papp.socket_thread.bounce
 
 import android.graphics.PointF
 import android.graphics.RectF
@@ -19,7 +19,7 @@ class Obstacle {
 
     init {
         curPosX = if(speed > 0 ) 0f
-        else TestGameCons.BITMAP_WIDTH.toFloat()
+        else BounceCons.BITMAP_WIDTH.toFloat()
     }
 
     fun toJson(): String {
