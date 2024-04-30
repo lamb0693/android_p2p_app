@@ -22,11 +22,13 @@ import android.util.AttributeSet
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModelProvider
 import com.example.lamb0693.p2papp.Constant
@@ -47,6 +49,7 @@ import com.example.lamb0693.p2papp.viewmodel.LandingViewModel
 import java.net.InetSocketAddress
 import java.util.Objects
 import java.util.Timer
+import java.util.TimerTask
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -63,16 +66,16 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
     private var param1: String? = null
     private var param2: String? = null
 
-    // socketConnected와, GameStatus를 위한 ViewModel
+    // socketConnected 와, GameStatus 를 위한 ViewModel
     private lateinit var landingViewModel : LandingViewModel
 
-    // Fragment를 Activity에 전달하기 위한 View
+    // Fragment 를 Activity 에 전달 하기 위한 View
     private lateinit var thisFragment : View
 
-    // homeFragment는 항상 Activity에 남아 있음
+    // homeFragment 는 항상 Activity 에 남아 있음
     private var homeFragment: HomeFragment? = null
 
-    // MainActiviy의 함수 실행용
+    // MainActivity 의 함수 실행용
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
     // Game 화면을 그리기 위한 View
@@ -106,7 +109,7 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         var serverWin = 0
         var clientWin = 0
 
-        var gameData = LandingData()  // class를 만드는 것은 의미 없음. 단지 만들어 놓음
+        var gameData = LandingData()  // class 를 만드는 것은 의미 없음. 단지 만들어 놓음
 
         private val paint: Paint = Paint()
 
@@ -120,9 +123,9 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         private var scaleY: Float = 1.0f
 
         /*****************************
-         * onSizeChanged  - bitmap 및 offScreenBitmp을 resize
-         * onDraw() 에서 drawGame을 call
-         * drawGame() - rescale 된 bitmap에 rescale된 immge를 그림
+         * onSizeChanged  - bitmap 및 offScreenBitmap 을 resize
+         * onDraw() 에서 drawGame 을 call
+         * drawGame() - rescale 된 bitmap 에 rescale 된 image 를 그림
          *****************************/
         override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
             super.onSizeChanged(w, h, oldw, oldh)
@@ -182,7 +185,7 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         landingViewModel = ViewModelProvider(this)[LandingViewModel::class.java]
 
         landingViewModel.socketConnected.observe(viewLifecycleOwner){
-            val imageViewSocketConnected = thisFragment.findViewById<ImageView>(R.id.imageSocketConnectStatus)
+            val imageViewSocketConnected = thisFragment.findViewById<ImageView>(R.id.ivSocketConnectStatusLanding)
             if(it) imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_on)
             else imageViewSocketConnected.setImageResource(R.drawable.custom_socket_connection_off)
         }
@@ -278,6 +281,28 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         initTestViewButtonAndListener()
 
         return thisFragment
+    }
+
+    private fun initGameInterfaceListener() {
+
+    }
+
+    // timer를 on or off  => Game Controller 의 상태를 주기적으로 Server로 보냄
+    private fun startTouchEventTimer(activate : Boolean) {
+        if (activate) {
+            if (touchTimer == null) {
+                touchTimer = Timer().apply {
+                    scheduleAtFixedRate(object : TimerTask() {
+                        override fun run() {
+
+                        }
+                    }, 0, BounceCons.TOUCH_EVENT_INTERVAL)
+                }
+            }
+        } else {
+            touchTimer?.cancel() // Stop the timer if it's running
+            touchTimer = null // Reset the timer instance
+        }
     }
 
     fun setHomeFragment(fragment: HomeFragment?) {
@@ -468,21 +493,80 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
             }
     }
 
-    override fun onThreadTerminated() {
-        TODO("Not yet implemented")
+    /**********************************]
+     * 기본적인 ThreadMessageCallback overload
+     * Thread 에서 실행 시킴 : runOnUiThread 필요
+     ***********************************/
+    override fun onConnectionMade() {
+        mainActivity.runOnUiThread{
+            landingViewModel.setSocketConnected(true)
+            Toast.makeText(mainActivity, "상대방과 게임에 연결 되었습니다", Toast.LENGTH_SHORT).show()
+            buttonStart?.isEnabled = true
+        }
     }
-
     override fun onThreadStarted() {
-        TODO("Not yet implemented")
+        Log.i("onThreadStarted", "from thread : started")
+    }
+    override fun onThreadTerminated() {
+        Log.i("onThreadTerminated", "from thread : terminating")
+        mainActivity.runOnUiThread {
+            landingViewModel.setSocketConnected(false)
+            SimpleConfirmDialog(mainActivity, R.string.allim,
+                R.string.connection_lost_message).showDialog()
+
+            homeFragment?.let { fragment ->
+                fragmentTransactionHandler?.onChangeFragment(fragment, "HomeFragment")
+            }
+        }
     }
 
+    /***************
+     * ThreadMessageCallback overload  : GameStateMessage 처리
+     * onGameStateMessageFromThread :  from server thread server 만 해당
+     * onGameStateFromServerViaSocket : from client thread  client 만 해당
+     * processGameStateChange
+     * 두 개 다 동일한 code 구현 or processGameStateChange 에서 구현
+     */
     override fun onGameStateMessageFromThread(gameState: GameState) {
-        TODO("Not yet implemented")
+        if(mainActivity.asServer!!){
+            Log.i("onGameStateMessageFromThread", "received GameState message from server thread")
+            mainActivity.runOnUiThread{
+                processGameStateChange(gameState)
+            }
+        }
     }
 
+    //client는 server -> client thread통해 받고
     override fun onGameStateFromServerViaSocket(gameState: GameState) {
-        TODO("Not yet implemented")
+        if(!mainActivity.asServer!!){
+            Log.i("onGameStateFromServerViaSocket", "received GameState message from client thread")
+            mainActivity.runOnUiThread{
+                processGameStateChange(gameState)
+            }
+        }
     }
+
+    private fun processGameStateChange(gameState: GameState) {
+        when(gameState){
+            GameState.STARTED-> {
+                Toast.makeText(mainActivity, "game started", Toast.LENGTH_SHORT).show()
+                landingViewModel.setGameState(GameState.STARTED)
+                startTouchEventTimer(true)
+            }
+            GameState.PAUSED-> {
+                startTouchEventTimer(false)
+                Toast.makeText(mainActivity, "game paused", Toast.LENGTH_SHORT).show()
+                landingViewModel.setGameState(GameState.PAUSED)
+            }
+            GameState.STOPPED-> {
+                startTouchEventTimer(false)
+                Toast.makeText(mainActivity, "game stopped", Toast.LENGTH_SHORT).show()
+                landingViewModel.setGameState(GameState.STOPPED)
+            }
+        }
+        buttonStart?.isEnabled = true
+    }
+
 
     /***************
      * ThreadMessageCallback overload : GameData 처리
@@ -525,10 +609,10 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
     }
 
     /**********************************]
-     * Winnder message 처리
-     * Thread에서 실행 시킴 : runOnUiThread 필요
-     * onGameWinnerFromServerViaSocket : client용
-     * onGameWinnerFromThread : server용
+     * Winner message 처리
+     * Thread 에서 실행 시킴 : runOnUiThread 필요
+     * onGameWinnerFromServerViaSocket : client 용
+     * onGameWinnerFromThread : server 용
      ***********************************/
     override fun onGameWinnerFromThread(isServerWin: Boolean) {
         mainActivity.runOnUiThread {
@@ -564,10 +648,6 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
             landingGameView.invalidate()
             buttonStart?.isEnabled = true
         }
-    }
-
-    override fun onConnectionMade() {
-        TODO("Not yet implemented")
     }
 
     /*********************

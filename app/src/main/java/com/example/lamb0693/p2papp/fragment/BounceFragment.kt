@@ -62,15 +62,15 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
     private var param1: String? = null
     private var param2: String? = null
 
-    // socketConnected와, GameStatus를 위한 ViewModel
+    // socketConnected 와, GameStatus 를 위한 ViewModel
     private lateinit var bounceViewModel : BounceViewModel
 
-    //Fragment를 Activity에 전달하기 위한 View
+    //Fragment 를 Activity 에 전달 하기 위한 View
     private lateinit var bounceView : View
 
-    // homeFragment는 항상 Activity에 남아 있음
+    // homeFragment 는 항상 Activity 에 남아 있음
     private var homeFragment: HomeFragment? = null
-    // MainActiviy의 함수 실행용
+    // MainActivity 의 함수 실행용
     private var fragmentTransactionHandler : FragmentTransactionHandler? = null
 
     // Game 화면을 그리기 위한 View
