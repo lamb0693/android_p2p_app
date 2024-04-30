@@ -51,10 +51,18 @@ class HomeFragment : Fragment() {
         // Inflate the layout for this fragment
         thisView = inflater.inflate(R.layout.fragment_home, container, false)
 
+        // Start Bounce Game
         val buttonBounce = thisView?.findViewById<ImageButton>(R.id.imageButtonBounce)
-        if(buttonBounce == null) Log.e(">>>>", "buttonAsServer null")
+        if(buttonBounce == null) Log.e("onCreateView", "buttonAsServer null")
         buttonBounce?.setOnClickListener{
-            fragmentTransactionHandler?.onGameBounceButtonClicked()
+            fragmentTransactionHandler?.onGameButtonClicked("Bounce")
+        }
+
+        // Start Landing Game
+        val buttonLanding = thisView?.findViewById<ImageButton>(R.id.imageButtonLanding)
+        if(buttonLanding == null) Log.e("onCreateView", "buttonLanding null")
+        buttonLanding?.setOnClickListener{
+            fragmentTransactionHandler?.onGameButtonClicked("Landing")
         }
 
         return thisView

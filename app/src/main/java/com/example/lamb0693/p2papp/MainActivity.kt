@@ -30,6 +30,7 @@ import com.example.lamb0693.p2papp.databinding.ActivityMainBinding
 import com.example.lamb0693.p2papp.fragment.HomeFragment
 import com.example.lamb0693.p2papp.fragment.SettingFragment
 import com.example.lamb0693.p2papp.fragment.BounceFragment
+import com.example.lamb0693.p2papp.fragment.LandingFragment
 import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandler
 import com.example.lamb0693.p2papp.viewmodel.MainViewModel
 
@@ -337,16 +338,42 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
         asServer = false
     }
 
-    @RequiresApi(Build.VERSION_CODES.Q)
-    override fun onGameBounceButtonClicked() {
+//    @RequiresApi(Build.VERSION_CODES.Q)
+//    override fun onGameBounceButtonClicked() {
+//        if(isSocketConnectionPossible()) {
+//            if(!asServer!!) {
+//                SimpleConfirmDialog(this, R.string.allim ,R.string.condtion_open_room).showDialog()
+//                return
+//            }
+//            BounceFragment.newInstance("val1", "val2").apply {
+//                setHomeFragment(homeFragment)
+//                onChangeFragment(this, "BounceFragment")
+//            }
+//        } else {
+//            Toast.makeText(this, getString(R.string.wifiaware_first),
+//                Toast.LENGTH_SHORT).show()
+//        }
+//    }
+
+    override fun onGameButtonClicked(gameName : String) {
         if(isSocketConnectionPossible()) {
             if(!asServer!!) {
                 SimpleConfirmDialog(this, R.string.allim ,R.string.condtion_open_room).showDialog()
                 return
             }
-            BounceFragment.newInstance("val1", "val2").apply {
-                setHomeFragment(homeFragment)
-                onChangeFragment(this, "BounceFragment")
+            when(gameName){
+                "Bounce" -> {
+                    BounceFragment.newInstance("val1", "val2").apply {
+                        setHomeFragment(homeFragment)
+                        onChangeFragment(this, "BounceFragment")
+                    }
+                }
+                "Landing" -> {
+                    LandingFragment.newInstance("val1", "val2").apply {
+                        setHomeFragment(homeFragment)
+                        onChangeFragment(this, "LandFragment")
+                    }
+                }
             }
         } else {
             Toast.makeText(this, getString(R.string.wifiaware_first),

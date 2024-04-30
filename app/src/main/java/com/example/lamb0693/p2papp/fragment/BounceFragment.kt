@@ -98,7 +98,7 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
 
 
     /***********************************
-     * TestGameView
+     * BounceGameView
      **********************************/
     class BounceGameView @JvmOverloads constructor(
         context: Context,
@@ -382,7 +382,7 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
         buttonToHome = bounceView.findViewById<ImageButton>(R.id.buttonToHomeFromTest)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
 
-        buttonStart = bounceView.findViewById<Button>(R.id.buttonStartTestGame)
+        buttonStart = bounceView.findViewById<Button>(R.id.buttonStarBounceGame)
         if(buttonStart == null) Log.e(">>>>", "buttonStart null")
         buttonStart?.isEnabled = false
 
@@ -444,7 +444,7 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
                               savedInstanceState: Bundle?): View? {
 
         // Inflate the layout for this fragment
-        bounceView = inflater.inflate(R.layout.fragment_test, container, false)
+        bounceView = inflater.inflate(R.layout.fragment_bounce, container, false)
         bounceGameView = bounceView.findViewById(R.id.viewTestGame)
 
         connectivityManager = mainActivity.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
@@ -788,14 +788,19 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
      * onGameDataReceivedFromServerViaSocket : from client thread, client only
      * processGameData
      */
-    override fun onGameDataReceivedFromThread(gameData: BounceData) {
-        if(mainActivity.asServer!!){
-            //Log.i(">>>>", "received gameData in BounceFragment : $gameData")
-            processGameData(gameData)
+    override fun onGameDataReceivedFromThread(gameData: Any) {
+        if(gameData is BounceData) {
+            if(mainActivity.asServer!!){
+                //Log.i(">>>>", "received gameData in BounceFragment : $gameData")
+                processGameData(gameData)
+            } else {
+                Log.e(">>>>", "onGameDataReceivedFromThread to client")
+            }
         } else {
-            Log.e(">>>>", "onGameDataReceivedFromThread to client")
+            Log.e("onGameDataReceivedFromThread", "Wrong structure of gameData")
         }
     }
+
     override fun onGameDataReceivedFromServerViaSocket(strGameData: String) {
         if(mainActivity.asServer!!) {
             Log.e(">>>>", "onGameDataReceivedFromServerViaSocket to server")

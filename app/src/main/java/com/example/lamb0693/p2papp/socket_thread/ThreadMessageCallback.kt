@@ -19,7 +19,7 @@ interface ThreadMessageCallback {
     fun onThreadStarted()
     fun onGameStateMessageFromThread(gameState: GameState)
     fun onGameStateFromServerViaSocket(gameState : GameState)
-    fun onGameDataReceivedFromThread(gameData: BounceData)
+    fun onGameDataReceivedFromThread(gameData : Any)
     fun onGameDataReceivedFromServerViaSocket(strGameData: String)
     fun onGameWinnerFromThread(isServerWin: Boolean)
     fun onGameWinnerFromServerViaSocket(isServerWin: Boolean)

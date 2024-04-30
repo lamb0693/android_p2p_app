@@ -29,6 +29,7 @@ interface FragmentTransactionHandler {
     fun onAsClientButtonClicked()
 
     //from HomeFragment
-    fun onGameBounceButtonClicked()
+    //fun onGameBounceButtonClicked()
+    fun onGameButtonClicked(gameName : String)
 
-}
+ }

@@ -35,4 +35,5 @@
     <string name="confirm_exit">종료할까요</string>
     <string name="no">아니오</string>
     <string name="yes">예</string>
+    <string name="landing_game">게임 Landing</string>
 </resources>

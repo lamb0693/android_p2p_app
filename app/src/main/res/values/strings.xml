@@ -36,5 +36,6 @@
     <string name="no">No</string>
     <string name="yes">Yes</string>
     <string name="bounce_game_description" translatable="false">Bounce Game Description</string>
+    <string name="landing_game">Landing</string>
 
 </resources>

@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    tools:context=".fragment.BounceFragment" >
+    tools:context=".fragment.LandingFragment">
 
     <LinearLayout
         android:background="#cccccc"
@@ -14,7 +12,7 @@
         android:orientation="horizontal">
 
         <ImageView
-            android:id="@+id/imageSocketConnectStatus"
+            android:id="@+id/ivSocketConnectStatusLanding"
             android:layout_width="60dp"
             android:layout_height="match_parent"
             android:adjustViewBounds="true"
@@ -23,31 +21,32 @@
             tools:ignore="ContentDescription" />
 
         <TextView
-            android:id="@+id/textView3"
+            android:id="@+id/tvTitleLanding"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:textSize="17sp"
-            android:text="@string/bounce_game" />
+            android:text="@string/landing_game" />
 
         <Button
-            android:id="@+id/buttonStartTestGame"
+            android:id="@+id/btnStarLandingGame"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             style="@style/CustomBorderlessButtonWithColorPrimary"
             android:text="@string/start" />
 
         <ImageButton
-            android:id="@+id/buttonToHomeFromTest"
+            android:id="@+id/buttonToHomeFromLanding"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
             android:src="@android:drawable/ic_menu_revert"
             android:contentDescription="@string/image_button_to_home" />
     </LinearLayout>
 
-    <view class="com.example.lamb0693.p2papp.fragment.BounceFragment$BounceGameView"
+    <view class="com.example.lamb0693.p2papp.fragment.LandingFragment$LandingGameView"
         android:id="@+id/viewTestGame"
         android:background="@color/design_default_color_primary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content" />
-</LinearLayout>
+
+</FrameLayout>
