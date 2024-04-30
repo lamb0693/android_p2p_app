@@ -283,6 +283,21 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         return thisFragment
     }
 
+    @RequiresApi(Build.VERSION_CODES.Q)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+
+        // asServer -> initServerSocket else connectToServerSocket
+        if(mainActivity.asServer!!) {
+            initServerSocket()  // accept()에서 block됨
+            mainActivity.sendMessageViaSession("INVITATION:LANDING")
+        }
+        else connectToServerSocket()
+
+        // Game Control용 Listerner
+        initGameInterfaceListener()
+    }
+
     private fun initGameInterfaceListener() {
 
     }

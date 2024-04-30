@@ -463,7 +463,7 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
         // asServer -> initServerSocket else connectToServerSocket
         if(mainActivity.asServer!!) {
             initServerSocket()  // accept()에서 block됨
-            mainActivity.sendMessageViaSession("INVITATION")
+            mainActivity.sendMessageViaSession("INVITATION:BOUNCE")
         }
         else connectToServerSocket()
 

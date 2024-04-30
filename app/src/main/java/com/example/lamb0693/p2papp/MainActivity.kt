@@ -219,8 +219,9 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
                 override fun onMessageReceived(peerHandle: PeerHandle, message: ByteArray) {
                     val receivedMessage = String(message, Charsets.UTF_8)
                     Log.i(">>>>", "onMessageReceived...$peerHandle, $receivedMessage")
-                    if(receivedMessage.contains("INVITATION")) {
-                        showInvitationAlertDialog()
+                    if(receivedMessage.startsWith("INVITATION")) {
+                        val messages = receivedMessage.split(":")
+                        showInvitationAlertDialog(messages[1])
                     } else if(receivedMessage.contains("SEND_SERVER_INFO")) {
                         Log.i(">>>>", "Recieved SEND_SERVER_INFO message")
                     } else {
@@ -421,22 +422,34 @@ class MainActivity : AppCompatActivity() , FragmentTransactionHandler {
 
     // client 만 해당
     // refuse하면 server에게 refuse message를 보냄
-    private fun showInvitationAlertDialog() {
+    private fun showInvitationAlertDialog(gameName : String) {
         val alertDialogBuilder = AlertDialog.Builder(this@MainActivity)
         alertDialogBuilder.setTitle(R.string.invitaion)
         alertDialogBuilder.setMessage(R.string.invitaion_message)
         alertDialogBuilder.setPositiveButton(R.string.accept) { dialogInterface, _ ->
             dialogInterface.dismiss()
-            // Handle invitation acceptance here
-            // For example, start the BounceFragment
-            BounceFragment.newInstance("val1", "val2").apply {
-                setHomeFragment(homeFragment)
-                onChangeFragment(this, "BounceFragment")
+            when(gameName){
+                "BOUNCE" -> {
+                    BounceFragment.newInstance("val1", "val2").apply {
+                        setHomeFragment(homeFragment)
+                        onChangeFragment(this, "BounceFragment")
+                    }
+                }
+                "LANDING" -> {
+                    LandingFragment.newInstance("val1", "val2").apply {
+                        setHomeFragment(homeFragment)
+                        onChangeFragment(this, "LandingFragment")
+                    }
+                }
+                else -> {
+                    return@setPositiveButton
+                }
             }
+
         }
         alertDialogBuilder.setNegativeButton(R.string.decline) { dialogInterface, _ ->
             dialogInterface.dismiss()
-            // server에 refuse message 보냄
+            // server 에 refuse message 보냄
             sendMessageViaSession("REFUSE_INVITATION")
         }
         val alertDialog = alertDialogBuilder.create()
