@@ -7,7 +7,6 @@ import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
-import android.graphics.PointF
 import android.graphics.Rect
 import android.graphics.RectF
 import android.net.ConnectivityManager
@@ -39,17 +38,15 @@ import com.example.lamb0693.p2papp.fragment.interfaces.FragmentTransactionHandle
 import com.example.lamb0693.p2papp.socket_thread.ClientSocketThread
 import com.example.lamb0693.p2papp.socket_thread.ThreadMessageCallback
 import com.example.lamb0693.p2papp.socket_thread.bounce.BounceCons
-import com.example.lamb0693.p2papp.socket_thread.bounce.BounceData
-import com.example.lamb0693.p2papp.socket_thread.bounce.BounceServerSocketThread
+import com.example.lamb0693.p2papp.socket_thread.landing.LandingCons
 import com.example.lamb0693.p2papp.socket_thread.landing.LandingData
 import com.example.lamb0693.p2papp.socket_thread.landing.LandingServerSocketThread
-import com.example.lamb0693.p2papp.viewmodel.BounceViewModel
 import com.example.lamb0693.p2papp.viewmodel.GameState
 import com.example.lamb0693.p2papp.viewmodel.LandingViewModel
 import java.net.InetSocketAddress
-import java.util.Objects
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.math.abs
 
 // TODO: Rename parameter arguments, choose names that match
 // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -113,14 +110,42 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
 
         private val paint: Paint = Paint()
 
+        private var scaleX: Float = 1.0f
+        private var scaleY: Float = 1.0f
+
         // 400 * 600 background
         private var backgroundBitmap = BitmapFactory.decodeResource(resources, R.drawable.background)
         private lateinit var offscreenBitmap: Bitmap
         private lateinit var offscreenCanvas: Canvas
         private lateinit var offscreenBitmapRect : Rect
 
-        private var scaleX: Float = 1.0f
-        private var scaleY: Float = 1.0f
+        // buttonRect
+        val upButtonRect = RectF()
+        val leftButtonRect = RectF()
+        val rightButtonRect = RectF()
+        var isUpButtonPressed = false
+        var isLeftButtonPressed = false
+        var isRightButtonPressed = false
+
+        private var bmLanderServer = BitmapFactory.decodeResource(resources, R.drawable.landing_blueship)
+
+
+        private var bmLowerFlame = BitmapFactory.decodeResource(resources, R.drawable.landing_flamelower)
+        private var bmLeftFlame = BitmapFactory.decodeResource(resources, R.drawable.landing_flameleft)
+        private var bmRightFlame = BitmapFactory.decodeResource(resources, R.drawable.landing_flameright)
+
+        private var bmBtnLeftBlue = BitmapFactory.decodeResource(resources, R.drawable.landing_left_blue)
+        private var bmBtnLeftBlueP = BitmapFactory.decodeResource(resources, R.drawable.landing_left_blue_pressed)
+        private var bmBtnRightBlue = BitmapFactory.decodeResource(resources, R.drawable.landing_right_blue)
+        private var bmBtnRightBlueP = BitmapFactory.decodeResource(resources, R.drawable.landing_right_blue_pressed)
+        private var bmBtnLeftRed = BitmapFactory.decodeResource(resources, R.drawable.landing_left_red)
+        private var bmBtnLeftRedP = BitmapFactory.decodeResource(resources, R.drawable.landing_left_red_pressed)
+        private var bmBtnRightRed = BitmapFactory.decodeResource(resources, R.drawable.landing_right_red)
+        private var bmBtnRightRedP = BitmapFactory.decodeResource(resources, R.drawable.landing_right_red_pressed)
+        private var bmBtnUpRed = BitmapFactory.decodeResource(resources, R.drawable.landing_up_red)
+        private var bmBtnUpRedP = BitmapFactory.decodeResource(resources, R.drawable.landing_up_red_pressed)
+        private var bmBtnUpBlue = BitmapFactory.decodeResource(resources, R.drawable.landing_up_blue)
+        private var bmBtnUpBlueP = BitmapFactory.decodeResource(resources, R.drawable.landing_up_blue_pressed)
 
         /*****************************
          * onSizeChanged  - bitmap 및 offScreenBitmap 을 resize
@@ -140,11 +165,103 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
             offscreenBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
             offscreenBitmapRect = Rect(0, 0, offscreenBitmap.width, offscreenBitmap.height )
             offscreenCanvas = Canvas(offscreenBitmap)
+
+            // resize Button Bitmap and Rect
+            resizeButtonRect(upButtonRect, LandingCons.UP_BUTTON_RECT)
+            resizeButtonRect(leftButtonRect, LandingCons.LEFT_BUTTON_RECT)
+            resizeButtonRect(rightButtonRect, LandingCons.RIGHT_BUTTON_RECT)
+
+            // resize Lander and Flame bitmap
+            bmLanderServer  = Bitmap.createScaledBitmap(bmLanderServer,
+                (LandingCons.LANDER_SIZE.x *scaleX).toInt(),
+                (LandingCons.LANDER_SIZE.y *scaleY).toInt(), true)
+            bmLowerFlame = Bitmap.createScaledBitmap(bmLowerFlame,
+                (LandingCons.FLAME_SIZE.x*scaleX).toInt(),
+                (LandingCons.FLAME_SIZE.y*scaleY).toInt(), true)
+            bmLeftFlame = Bitmap.createScaledBitmap(bmLeftFlame,
+                (LandingCons.SIDE_FLAME_SIZE.x*scaleX).toInt(),
+                (LandingCons.SIDE_FLAME_SIZE.y*scaleY).toInt(), true)
+            bmRightFlame = Bitmap.createScaledBitmap(bmRightFlame,
+                (LandingCons.SIDE_FLAME_SIZE.x*scaleX).toInt(),
+                (LandingCons.SIDE_FLAME_SIZE.y*scaleY).toInt(), true)
+
+            bmBtnLeftBlue = Bitmap.createScaledBitmap(bmBtnLeftBlue, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnLeftBlueP = Bitmap.createScaledBitmap(bmBtnLeftBlueP, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnRightBlue = Bitmap.createScaledBitmap(bmBtnRightBlue, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnRightBlueP = Bitmap.createScaledBitmap(bmBtnRightBlueP, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnLeftRed = Bitmap.createScaledBitmap(bmBtnLeftRed, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnLeftRedP = Bitmap.createScaledBitmap(bmBtnLeftRedP, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnRightRed = Bitmap.createScaledBitmap(bmBtnRightRed, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnRightRedP = Bitmap.createScaledBitmap(bmBtnRightRedP, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnUpRed = Bitmap.createScaledBitmap(bmBtnUpRed, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnUpRedP = Bitmap.createScaledBitmap(bmBtnUpRedP, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnUpBlue = Bitmap.createScaledBitmap(bmBtnUpBlue, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+            bmBtnUpBlueP = Bitmap.createScaledBitmap(bmBtnUpBlueP, (60*scaleX).toInt(), (60*scaleY).toInt(), true)
+        }
+
+        private fun resizeButtonRect(buttonRect : RectF, toRect : RectF) {
+            buttonRect.left = toRect.left * scaleX
+            buttonRect.right = toRect.right * scaleX
+            buttonRect.top = toRect.top * scaleY
+            buttonRect.bottom = toRect.bottom * scaleY
         }
 
         private fun drawGame(canvas : Canvas){
             canvas.drawBitmap(backgroundBitmap, 0f, 0f, paint)
+            drawLander(canvas)
+            drawSpeed(canvas)
+            drawButtons(canvas)
             drawScore(canvas)
+        }
+
+        private fun drawLander(canvas: Canvas) {
+            val serverShipDrawPos = gameData.serverLander.getScaledDrawPosition(scaleX, scaleY)
+            canvas.drawBitmap(bmLanderServer, serverShipDrawPos.x, serverShipDrawPos.y, paint)
+
+            if(gameData.serverLander.isLowerFlame) {
+                val pos = gameData.serverLander.getScaledLowerFlameDrawPosition(scaleX, scaleY)
+                canvas.drawBitmap(bmLowerFlame, pos.x, pos.y, paint)
+            }
+            if(gameData.serverLander.isLeftFlame) {
+                val pos = gameData.serverLander.getScaledLeftFlameDrawPosition(scaleX, scaleY)
+                canvas.drawBitmap(bmLeftFlame, pos.x, pos.y, paint)
+            }
+            if(gameData.serverLander.isRightFlame) {
+                val pos = gameData.serverLander.getScaledRightFlameDrawPosition(scaleX, scaleY)
+                canvas.drawBitmap(bmRightFlame, pos.x, pos.y, paint)
+            }
+        }
+
+        private fun drawSpeed(canvas: Canvas) {
+            if(abs(gameData.serverLander.delta.x) >1) paint.color = Color.RED
+            else paint.color = Color.GREEN
+            paint.textSize = 30f*scaleY
+            canvas.drawText("수평속도 ${String.format("%.2f", gameData.serverLander.delta.x)}", 50f,100f, paint)
+
+            if(gameData.serverLander.delta.y >2) paint.color = Color.RED
+            else if(gameData.serverLander.delta.y <0) paint.color = Color.BLACK
+            else paint.color = Color.GREEN
+            paint.textSize = 30f*scaleY
+            canvas.drawText("하강속도 ${String.format("%.2f", gameData.serverLander.delta.y)}", 50f,180f, paint)
+        }
+
+        private fun drawButtons(canvas: Canvas) {
+            val mainActivity = (context as MainActivity)
+            if(mainActivity.asServer!!) {
+                if(isLeftButtonPressed) canvas.drawBitmap(bmBtnLeftBlue, leftButtonRect.left, leftButtonRect.top, paint)
+                else canvas.drawBitmap(bmBtnLeftBlueP, leftButtonRect.left, leftButtonRect.top, paint)
+                if(isRightButtonPressed)  canvas.drawBitmap(bmBtnRightBlue, rightButtonRect.left, rightButtonRect.top, paint)
+                else canvas.drawBitmap(bmBtnRightBlueP, rightButtonRect.left, rightButtonRect.top, paint)
+                if(isUpButtonPressed)  canvas.drawBitmap(bmBtnUpBlue, upButtonRect.left, upButtonRect.top, paint)
+                else canvas.drawBitmap(bmBtnUpBlueP, upButtonRect.left, upButtonRect.top, paint)
+            } else {
+                if(isLeftButtonPressed) canvas.drawBitmap(bmBtnLeftRed, leftButtonRect.left, leftButtonRect.top, paint)
+                else canvas.drawBitmap(bmBtnLeftRedP, leftButtonRect.left, leftButtonRect.top, paint)
+                if(isRightButtonPressed)  canvas.drawBitmap(bmBtnRightRed, rightButtonRect.left, rightButtonRect.top, paint)
+                else canvas.drawBitmap(bmBtnRightRedP, rightButtonRect.left, rightButtonRect.top, paint)
+                if(isUpButtonPressed)  canvas.drawBitmap(bmBtnUpRed, upButtonRect.left, upButtonRect.top, paint)
+                else canvas.drawBitmap(bmBtnUpRedP, upButtonRect.left, upButtonRect.top, paint)
+            }
         }
 
         private fun drawScore(canvas : Canvas){
@@ -205,7 +322,7 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
     }
 
     // Fragment의 Button 초기화 및 설정
-    private fun initTestViewButtonAndListener(){
+    private fun initFragmentButtonAndListener(){
         buttonToHome = thisFragment.findViewById<ImageButton>(R.id.buttonToHomeFromLanding)
         if(buttonToHome == null) Log.e(">>>>", "buttonToHome null")
 
@@ -278,7 +395,7 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         connectivityManager = mainActivity.getSystemService(android.content.Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
 
         initViewModel()
-        initTestViewButtonAndListener()
+        initFragmentButtonAndListener()
 
         return thisFragment
     }
@@ -291,15 +408,58 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
         if(mainActivity.asServer!!) {
             initServerSocket()  // accept()에서 block됨
             mainActivity.sendMessageViaSession("INVITATION:LANDING")
-        }
-        else connectToServerSocket()
+        } else connectToServerSocket()
 
         // Game Control용 Listerner
         initGameInterfaceListener()
     }
 
     private fun initGameInterfaceListener() {
+        landingGameView.setOnTouchListener { view, event ->
+            val pointerIndex = event.actionIndex
+            val pointerId = event.getPointerId(pointerIndex)
+            val actionMasked = event.actionMasked
 
+            when (actionMasked) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_POINTER_DOWN -> {
+                    // Check if touch is inside any of the controller areas
+                    if (landingGameView.upButtonRect.contains(event.getX(pointerIndex), event.getY(pointerIndex))) {
+                        landingGameView.isUpButtonPressed = true
+                    } else if (landingGameView.leftButtonRect.contains(event.getX(pointerIndex), event.getY(pointerIndex))) {
+                        landingGameView.isLeftButtonPressed = true
+                    } else if (landingGameView.rightButtonRect.contains(event.getX(pointerIndex), event.getY(pointerIndex))) {
+                        landingGameView.isRightButtonPressed = true
+                    }
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    // Update current position if user is using the stick
+                    for (i in 0 until event.pointerCount) {
+                        event.getPointerId(i)
+                        val x = event.getX(i)
+                        val y = event.getY(i)
+
+                        landingGameView.isUpButtonPressed = landingGameView.upButtonRect.contains(x, y)
+                        landingGameView.isLeftButtonPressed = landingGameView.leftButtonRect.contains(x, y)
+                        landingGameView.isRightButtonPressed = landingGameView.rightButtonRect.contains(x, y)
+                    }
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP -> {
+                    // Reset button states when touch is released
+                    if (pointerId != MotionEvent.INVALID_POINTER_ID) {
+                        if (landingGameView.upButtonRect.contains(event.getX(pointerIndex), event.getY(pointerIndex))) {
+                            landingGameView.isUpButtonPressed = false
+                        } else if (landingGameView.leftButtonRect.contains(event.getX(pointerIndex), event.getY(pointerIndex))) {
+                            landingGameView.isLeftButtonPressed = false
+                        } else if (landingGameView.rightButtonRect.contains(event.getX(pointerIndex), event.getY(pointerIndex))) {
+                            view.performClick()
+                            landingGameView.isRightButtonPressed = false
+                        }
+                    }
+                }
+            }
+
+            true // Indicate that touch event is consumed
+        }
     }
 
     // timer를 on or off  => Game Controller 의 상태를 주기적으로 Server로 보냄
@@ -309,9 +469,15 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
                 touchTimer = Timer().apply {
                     scheduleAtFixedRate(object : TimerTask() {
                         override fun run() {
-
+                            if (mainActivity.asServer!!) {
+                                val strToSend = "ACTION:SERVER:${landingGameView.isLeftButtonPressed}:${landingGameView.isRightButtonPressed}:${landingGameView.isUpButtonPressed}"
+                                serverSocketThread?.onGameDataFromServerFragment(strToSend)
+                            } else {
+                                val strToSend = "ACTION:CLIENT:${landingGameView.isLeftButtonPressed}:${landingGameView.isRightButtonPressed}:${landingGameView.isUpButtonPressed}"
+                                clientSocketThread?.onMessageFromClientToServer(strToSend)
+                            }
                         }
-                    }, 0, BounceCons.TOUCH_EVENT_INTERVAL)
+                    }, 0, LandingCons.TOUCH_EVENT_INTERVAL)
                 }
             }
         } else {
@@ -670,13 +836,14 @@ class LandingFragment : Fragment(), ThreadMessageCallback {
      * onOtherMessageReceivedFromServerViaSocket : Server 만 해당
      * onOtherMessageFromClientViaSocket
      * 현재는 HEART_BEAT 외에는 없어서 없어도 될 듯함
+     * 미리 thread 에서 잘려서 오므로 delimeter 확인 필요 없음
      **************************/
     override fun onOtherMessageReceivedFromServerViaSocket(receivedMessage: String) {
         if(mainActivity.asServer!!) return
-        if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageReceivedFromServerViaSocket : $receivedMessage")
+        Log.i("onOtherMessageReceivedFromServerViaSocket", receivedMessage)
     }
     override fun onOtherMessageFromClientViaSocket(receivedMessage: String) {
         if(!mainActivity.asServer!!) return
-        if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageFromClientViaSocket : $receivedMessage")
+        Log.i("onOtherMessageReceivedFromServerViaSocket", receivedMessage)
     }
 }

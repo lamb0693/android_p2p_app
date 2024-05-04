@@ -874,11 +874,11 @@ class BounceFragment : Fragment(), ThreadMessageCallback {
      **************************/
     override fun onOtherMessageReceivedFromServerViaSocket(receivedMessage: String) {
         if(mainActivity.asServer!!) return
-        if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageReceivedFromServerViaSocket : $receivedMessage")
+        Log.i(">>>>", "onOtherMessageReceivedFromServerViaSocket : $receivedMessage")
     }
     override fun onOtherMessageFromClientViaSocket(receivedMessage: String) {
         if(!mainActivity.asServer!!) return
-        if(receivedMessage != "HEARTBEAT") Log.i(">>>>", "onOtherMessageFromClientViaSocket : $receivedMessage")
+        Log.i(">>>>", "onOtherMessageFromClientViaSocket : $receivedMessage")
     }
 
     /**********************************

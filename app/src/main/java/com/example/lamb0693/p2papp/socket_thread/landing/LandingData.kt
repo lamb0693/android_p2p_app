@@ -3,11 +3,12 @@ package com.example.lamb0693.p2papp.socket_thread.landing
 import com.google.gson.Gson
 
 class LandingData {
-    init {
+    var serverLander = Lander(true)
+    var clientLander = Lander(false)
 
-    }
     fun resetData() {
-
+        serverLander.resetLanderData()
+        clientLander.resetLanderData()
     }
 
     private fun toJson(): String {

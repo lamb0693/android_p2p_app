@@ -288,7 +288,7 @@ class BounceServerSocketThread (
         if(isPaused) return
 
         synchronized(this){
-            val strToSend = gameData.getStringToSendViaSocket()
+            val strToSend = gameData.getStringToSendViaSocket() + "\n"
             messageCallback.onGameDataReceivedFromThread(gameData)
             sendMessageToClientViaSocket(strToSend)
         }

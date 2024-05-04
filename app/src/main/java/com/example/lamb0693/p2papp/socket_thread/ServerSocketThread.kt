@@ -62,6 +62,7 @@ open class ServerSocketThread(
                             }
                         }
                     } else {
+                        Log.i(">>>>", "HEARTBEAT coroutine started")
                         CoroutineScope(Dispatchers.IO).launch {
                             while (isRunning) {
                                 sendMessageToClientViaSocket("HEARTBEAT")
@@ -79,25 +80,31 @@ open class ServerSocketThread(
                                 val receivedMessage = String(buffer, 0, bytesRead)
                                 // Handle the received message
                                 //Log.i(">>>>",  "ServerThread ReceivedMessage : $receivedMessage")
-                                if(receivedMessage.startsWith("ACTION")){
-                                    processGameDataInServer(receivedMessage, (timerInterval==0L))  //true 이면 수동
-                                } else {
-                                    when(receivedMessage) {
-                                        "CLIENT_PREPARED_GAME" -> {
-                                            isClientPrepared = true
-                                            if (isServerPrepared) startGameRoutine()
+                                val messages = receivedMessage.split("\n")
+                                //Log.i(">>>>", "$messages")
+                                for(message in messages){
+                                    if(message.isNotBlank()){
+                                        if(message.startsWith("ACTION")){
+                                            processGameDataInServer(message, (timerInterval==0L))  //true 이면 수동
+                                        } else {
+                                            when(message) {
+                                                "CLIENT_PREPARED_GAME" -> {
+                                                    isClientPrepared = true
+                                                    if (isServerPrepared) startGameRoutine()
+                                                }
+                                                "CLIENT_PAUSED_GAME" -> {
+                                                    isPaused = true
+                                                    messageCallback.onGameStateMessageFromThread(GameState.PAUSED)
+                                                    sendMessageToClientViaSocket("SERVER_PAUSED_GAME")
+                                                }
+                                                "CLIENT_RESTART_GAME" -> {
+                                                    isPaused = false
+                                                    messageCallback.onGameStateMessageFromThread(GameState.STARTED)
+                                                    sendMessageToClientViaSocket("SERVER_RESTARTED_GAME")
+                                                }
+                                                else -> messageCallback.onOtherMessageFromClientViaSocket(message)
+                                            }
                                         }
-                                        "CLIENT_PAUSED_GAME" -> {
-                                            isPaused = true
-                                            messageCallback.onGameStateMessageFromThread(GameState.PAUSED)
-                                            sendMessageToClientViaSocket("SERVER_PAUSED_GAME")
-                                        }
-                                        "CLIENT_RESTART_GAME" -> {
-                                            isPaused = false
-                                            messageCallback.onGameStateMessageFromThread(GameState.STARTED)
-                                            sendMessageToClientViaSocket("SERVER_RESTARTED_GAME")
-                                        }
-                                        else -> messageCallback.onOtherMessageFromClientViaSocket(receivedMessage)
                                     }
                                 }
                             } else {

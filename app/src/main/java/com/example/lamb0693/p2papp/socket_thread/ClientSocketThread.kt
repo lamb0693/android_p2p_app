@@ -104,7 +104,8 @@ open class ClientSocketThread (private val host : InetSocketAddress,
         try{
             if (socket != null && socket!!.isConnected) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    outputStream?.write(message.toByteArray())
+                    val messageWithLF = message + "\n"
+                    outputStream?.write(messageWithLF.toByteArray())
                     //Log.i(">>>>", "sendMessageToServerViaSocket@ClientSocketThred sended message $message to ClientSocket")
                 }
             }

@@ -7,7 +7,7 @@ object BounceCons {
     const val TEST_GAME_INTERVAL = 100L
 
     // 사용자 인풋 refresh interval
-    const val TOUCH_EVENT_INTERVAL = 80L
+    const val TOUCH_EVENT_INTERVAL = 70L
 
     const val OBSTACLE_REGEN_INTERVAL = 15
     //effect 관련
